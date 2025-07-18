@@ -717,3 +717,27 @@ class TestKotListTypeChecking(unittest.TestCase):
         lst = KotList([1, 2, 3, 4, 5])
         filtered = lst.filter_is_instance(int)
         self.assertEqual(filtered.to_list(), [1, 2, 3, 4, 5])
+    
+    def test_empty_list_then_add_kot_list(self):
+        # Test adding KotList as first element to empty list (covers line 39)
+        from kotlist import KotMutableList
+        empty = KotMutableList()
+        kot_element = KotList([1, 2, 3])
+        empty.add(kot_element)
+        self.assertEqual(empty._element_type, KotList)
+        
+        # Can add more KotLists
+        empty.add(KotList([4, 5, 6]))
+        self.assertEqual(len(empty), 2)
+    
+    def test_flatten_with_non_iterable_in_kot_list(self):
+        # Test flatten with non-iterable elements (covers line 227)
+        # Numbers are not iterable (except strings)
+        lst = KotList([1, 2, 3])
+        flattened = lst.flatten()
+        self.assertEqual(flattened.to_list(), [1, 2, 3])
+        
+        # Test with other non-iterable types
+        lst2 = KotList([True, False, True])
+        flattened2 = lst2.flatten()
+        self.assertEqual(flattened2.to_list(), [True, False, True])
