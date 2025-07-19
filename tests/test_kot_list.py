@@ -258,6 +258,40 @@ class TestKotListSearch(unittest.TestCase):
 
         self.assertEqual(lst.binary_search((3, 'x'), comparator), 1)
         self.assertEqual(lst.binary_search((4, 'x'), comparator), -3)
+        
+        # Test with reverse sorted list
+        reverse_lst = KotList([5, 4, 3, 2, 1])
+        
+        def reverse_comparator(a, b):
+            if a < b:
+                return 1  # Reverse order
+            elif a > b:
+                return -1
+            else:
+                return 0
+        
+        # Test finding elements
+        self.assertEqual(reverse_lst.binary_search(3, reverse_comparator), 2)
+        self.assertEqual(reverse_lst.binary_search(5, reverse_comparator), 0)
+        self.assertEqual(reverse_lst.binary_search(1, reverse_comparator), 4)
+        
+        # Test not finding elements - these cover different branches
+        self.assertEqual(reverse_lst.binary_search(0, reverse_comparator), -6)  # Would go after index 5
+        self.assertEqual(reverse_lst.binary_search(6, reverse_comparator), -1)  # Would go before index 0
+        self.assertEqual(reverse_lst.binary_search(3.5, reverse_comparator), -3)  # Would go between indices
+        
+        # Additional test cases to ensure all branches are covered
+        # Test with list that requires multiple binary search iterations
+        long_lst = KotList([10, 8, 6, 4, 2, 0, -2, -4, -6, -8])
+        
+        # Test finding elements at different positions
+        self.assertEqual(long_lst.binary_search(6, reverse_comparator), 2)
+        self.assertEqual(long_lst.binary_search(-4, reverse_comparator), 7)
+        self.assertEqual(long_lst.binary_search(0, reverse_comparator), 5)
+        
+        # Test not finding with comparisons that trigger all branches
+        self.assertEqual(long_lst.binary_search(5, reverse_comparator), -4)  # Between 6 and 4
+        self.assertEqual(long_lst.binary_search(-3, reverse_comparator), -8)  # Between -2 and -4
 
 
 class TestKotListTransform(unittest.TestCase):
@@ -838,3 +872,677 @@ class TestKotListTypeChecking(unittest.TestCase):
         lst2 = KotList([True, False, True])
         flattened2 = lst2.flatten()
         self.assertEqual(flattened2.to_list(), [True, False, True])
+
+
+class TestKotListNewElementRetrieval(unittest.TestCase):
+    def test_component_methods(self):
+        lst = KotList([10, 20, 30, 40, 50])
+        self.assertEqual(lst.component1(), 10)
+        self.assertEqual(lst.component2(), 20)
+        self.assertEqual(lst.component3(), 30)
+        self.assertEqual(lst.component4(), 40)
+        self.assertEqual(lst.component5(), 50)
+        
+        # Test with fewer elements
+        short_lst = KotList([1, 2])
+        self.assertEqual(short_lst.component1(), 1)
+        self.assertEqual(short_lst.component2(), 2)
+        with self.assertRaises(IndexError):
+            short_lst.component3()
+    
+    def test_single(self):
+        # Test with single element
+        single_lst = KotList([42])
+        self.assertEqual(single_lst.single(), 42)
+        
+        # Test with empty list
+        empty_lst = KotList()
+        with self.assertRaises(ValueError) as cm:
+            empty_lst.single()
+        self.assertIn("List is empty", str(cm.exception))
+        
+        # Test with multiple elements
+        multi_lst = KotList([1, 2, 3])
+        with self.assertRaises(ValueError) as cm:
+            multi_lst.single()
+        self.assertIn("List has more than one element", str(cm.exception))
+    
+    def test_single_or_null(self):
+        # Test with single element
+        single_lst = KotList([42])
+        self.assertEqual(single_lst.single_or_null(), 42)
+        self.assertEqual(single_lst.single_or_none(), 42)  # Test alias
+        
+        # Test with empty list
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.single_or_null())
+        self.assertIsNone(empty_lst.single_or_none())
+        
+        # Test with multiple elements
+        multi_lst = KotList([1, 2, 3])
+        self.assertIsNone(multi_lst.single_or_null())
+        self.assertIsNone(multi_lst.single_or_none())
+    
+    def test_single_predicate(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test finding single element
+        self.assertEqual(lst.single_predicate(lambda x: x == 3), 3)
+        
+        # Test no matching element
+        with self.assertRaises(ValueError) as cm:
+            lst.single_predicate(lambda x: x == 10)
+        self.assertIn("No element matching predicate found", str(cm.exception))
+        
+        # Test multiple matching elements
+        with self.assertRaises(ValueError) as cm:
+            lst.single_predicate(lambda x: x > 3)
+        self.assertIn("More than one element matching predicate found", str(cm.exception))
+    
+    def test_single_or_null_predicate(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test finding single element
+        self.assertEqual(lst.single_or_null_predicate(lambda x: x == 3), 3)
+        self.assertEqual(lst.single_or_none_predicate(lambda x: x == 3), 3)  # Test alias
+        
+        # Test no matching element
+        self.assertIsNone(lst.single_or_null_predicate(lambda x: x == 10))
+        self.assertIsNone(lst.single_or_none_predicate(lambda x: x == 10))
+        
+        # Test multiple matching elements
+        self.assertIsNone(lst.single_or_null_predicate(lambda x: x > 3))
+        self.assertIsNone(lst.single_or_none_predicate(lambda x: x > 3))
+    
+    def test_random(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test that random returns an element from the list
+        for _ in range(10):
+            element = lst.random()
+            self.assertIn(element, [1, 2, 3, 4, 5])
+        
+        # Test with custom Random instance
+        rng = random.Random(42)
+        element = lst.random(rng)
+        self.assertIn(element, [1, 2, 3, 4, 5])
+        
+        # Test with empty list
+        empty_lst = KotList()
+        with self.assertRaises(IndexError) as cm:
+            empty_lst.random()
+        self.assertIn("List is empty", str(cm.exception))
+    
+    def test_random_or_null(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test that random_or_null returns an element from the list
+        for _ in range(10):
+            element = lst.random_or_null()
+            self.assertIn(element, [1, 2, 3, 4, 5])
+        
+        # Test with custom Random instance
+        rng = random.Random(42)
+        element = lst.random_or_null(rng)
+        self.assertIn(element, [1, 2, 3, 4, 5])
+        
+        # Test alias
+        element = lst.random_or_none()
+        self.assertIn(element, [1, 2, 3, 4, 5])
+        
+        # Test alias with custom Random instance
+        element = lst.random_or_none(rng)
+        self.assertIn(element, [1, 2, 3, 4, 5])
+        
+        # Test with empty list
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.random_or_null())
+        self.assertIsNone(empty_lst.random_or_none())
+
+
+class TestKotListSublistOps(unittest.TestCase):
+    def test_slice(self):
+        lst = KotList([10, 20, 30, 40, 50])
+        
+        # Test normal slice
+        sliced = lst.slice([0, 2, 4])
+        self.assertEqual(sliced.to_list(), [10, 30, 50])
+        
+        # Test with out of bounds index
+        with self.assertRaises(IndexError):
+            lst.slice([0, 2, 10])
+        
+        # Test empty indices
+        empty_slice = lst.slice([])
+        self.assertEqual(empty_slice.to_list(), [])
+    
+    def test_take(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test normal take
+        self.assertEqual(lst.take(3).to_list(), [1, 2, 3])
+        self.assertEqual(lst.take(0).to_list(), [])
+        self.assertEqual(lst.take(10).to_list(), [1, 2, 3, 4, 5])
+        
+        # Test negative n
+        with self.assertRaises(ValueError):
+            lst.take(-1)
+    
+    def test_take_last(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test normal take_last
+        self.assertEqual(lst.take_last(3).to_list(), [3, 4, 5])
+        self.assertEqual(lst.take_last(0).to_list(), [])
+        self.assertEqual(lst.take_last(10).to_list(), [1, 2, 3, 4, 5])
+        
+        # Test negative n
+        with self.assertRaises(ValueError):
+            lst.take_last(-1)
+    
+    def test_take_while(self):
+        lst = KotList([1, 2, 3, 4, 5, 1, 2])
+        
+        # Test take_while
+        self.assertEqual(lst.take_while(lambda x: x < 4).to_list(), [1, 2, 3])
+        self.assertEqual(lst.take_while(lambda x: x < 1).to_list(), [])
+        self.assertEqual(lst.take_while(lambda x: x < 10).to_list(), [1, 2, 3, 4, 5, 1, 2])
+    
+    def test_take_last_while(self):
+        lst = KotList([1, 2, 3, 4, 5, 1, 2])
+        
+        # Test take_last_while
+        self.assertEqual(lst.take_last_while(lambda x: x < 3).to_list(), [1, 2])
+        self.assertEqual(lst.take_last_while(lambda x: x < 1).to_list(), [])
+        self.assertEqual(lst.take_last_while(lambda x: x < 10).to_list(), [1, 2, 3, 4, 5, 1, 2])
+    
+    def test_drop(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test normal drop
+        self.assertEqual(lst.drop(2).to_list(), [3, 4, 5])
+        self.assertEqual(lst.drop(0).to_list(), [1, 2, 3, 4, 5])
+        self.assertEqual(lst.drop(10).to_list(), [])
+        
+        # Test negative n
+        with self.assertRaises(ValueError):
+            lst.drop(-1)
+    
+    def test_drop_last(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test normal drop_last
+        self.assertEqual(lst.drop_last(2).to_list(), [1, 2, 3])
+        self.assertEqual(lst.drop_last(0).to_list(), [1, 2, 3, 4, 5])
+        self.assertEqual(lst.drop_last(10).to_list(), [])
+        
+        # Test negative n
+        with self.assertRaises(ValueError):
+            lst.drop_last(-1)
+    
+    def test_drop_while(self):
+        lst = KotList([1, 2, 3, 4, 5, 1, 2])
+        
+        # Test drop_while
+        self.assertEqual(lst.drop_while(lambda x: x < 4).to_list(), [4, 5, 1, 2])
+        self.assertEqual(lst.drop_while(lambda x: x < 1).to_list(), [1, 2, 3, 4, 5, 1, 2])
+        self.assertEqual(lst.drop_while(lambda x: x < 10).to_list(), [])
+    
+    def test_drop_last_while(self):
+        lst = KotList([1, 2, 3, 4, 5, 1, 2])
+        
+        # Test drop_last_while
+        self.assertEqual(lst.drop_last_while(lambda x: x < 3).to_list(), [1, 2, 3, 4, 5])
+        self.assertEqual(lst.drop_last_while(lambda x: x < 1).to_list(), [1, 2, 3, 4, 5, 1, 2])
+        self.assertEqual(lst.drop_last_while(lambda x: x < 10).to_list(), [])
+
+
+class TestKotListAdvancedTransform(unittest.TestCase):
+    def test_map_indexed_not_null(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test map_indexed_not_null
+        result = lst.map_indexed_not_null(lambda i, x: x * i if i % 2 == 0 else None)
+        self.assertEqual(result.to_list(), [0, 6, 20])
+        
+        # Test alias
+        result2 = lst.map_indexed_not_none(lambda i, x: x * i if i % 2 == 0 else None)
+        self.assertEqual(result2.to_list(), [0, 6, 20])
+    
+    def test_flat_map_indexed(self):
+        lst = KotList(['a', 'b', 'c'])
+        
+        # Test flat_map_indexed
+        result = lst.flat_map_indexed(lambda i, x: [x, str(i)])
+        self.assertEqual(result.to_list(), ['a', '0', 'b', '1', 'c', '2'])
+    
+    def test_zip_with_next(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test zip_with_next
+        result = lst.zip_with_next()
+        self.assertEqual(result.to_list(), [(1, 2), (2, 3), (3, 4), (4, 5)])
+        
+        # Test with single element
+        single = KotList([1])
+        self.assertEqual(single.zip_with_next().to_list(), [])
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertEqual(empty.zip_with_next().to_list(), [])
+    
+    def test_zip_with_next_transform(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test zip_with_next_transform
+        result = lst.zip_with_next_transform(lambda a, b: a + b)
+        self.assertEqual(result.to_list(), [3, 5, 7, 9])
+        
+        # Test with single element
+        single = KotList([1])
+        self.assertEqual(single.zip_with_next_transform(lambda a, b: a + b).to_list(), [])
+
+
+class TestKotListSearch(unittest.TestCase):
+    def test_find(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test find (alias for first_or_null_predicate)
+        self.assertEqual(lst.find(lambda x: x > 3), 4)
+        self.assertIsNone(lst.find(lambda x: x > 10))
+    
+    def test_find_last(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test find_last (alias for last_or_null_predicate)
+        self.assertEqual(lst.find_last(lambda x: x > 3), 5)
+        self.assertIsNone(lst.find_last(lambda x: x > 10))
+    
+    def test_first_not_null_of(self):
+        lst = KotList(['hello', '', 'world', ''])
+        
+        # Test first_not_null_of
+        result = lst.first_not_null_of(lambda x: x.upper() if x else None)
+        self.assertEqual(result, 'HELLO')
+        
+        # Test alias
+        result2 = lst.first_not_none_of(lambda x: x.upper() if x else None)
+        self.assertEqual(result2, 'HELLO')
+        
+        # Test with no non-null results
+        with self.assertRaises(ValueError):
+            lst.first_not_null_of(lambda x: None)
+    
+    def test_first_not_null_of_or_null(self):
+        lst = KotList(['', '', ''])
+        
+        # Test first_not_null_of_or_null
+        result = lst.first_not_null_of_or_null(lambda x: x.upper() if x else None)
+        self.assertIsNone(result)
+        
+        # Test alias
+        result2 = lst.first_not_none_of_or_none(lambda x: x.upper() if x else None)
+        self.assertIsNone(result2)
+
+
+class TestKotListAdvancedAggregation(unittest.TestCase):
+    def test_max_by(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        
+        # Test max_by
+        result = lst.max_by(len)
+        self.assertEqual(result, 'bbb')
+        
+        # Test with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError):
+            empty.max_by(len)
+    
+    def test_min_by(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        
+        # Test min_by
+        result = lst.min_by(len)
+        self.assertEqual(result, 'a')
+        
+        # Test with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError):
+            empty.min_by(len)
+    
+    def test_max_of(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        
+        # Test max_of
+        result = lst.max_of(len)
+        self.assertEqual(result, 3)
+        
+        # Test with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError):
+            empty.max_of(len)
+    
+    def test_min_of(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        
+        # Test min_of
+        result = lst.min_of(len)
+        self.assertEqual(result, 1)
+        
+        # Test with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError):
+            empty.min_of(len)
+    
+    def test_max_of_or_null(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        
+        # Test max_of_or_null
+        result = lst.max_of_or_null(len)
+        self.assertEqual(result, 3)
+        
+        # Test alias
+        result2 = lst.max_of_or_none(len)
+        self.assertEqual(result2, 3)
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertIsNone(empty.max_of_or_null(len))
+        self.assertIsNone(empty.max_of_or_none(len))
+    
+    def test_min_of_or_null(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        
+        # Test min_of_or_null
+        result = lst.min_of_or_null(len)
+        self.assertEqual(result, 1)
+        
+        # Test alias
+        result2 = lst.min_of_or_none(len)
+        self.assertEqual(result2, 1)
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertIsNone(empty.min_of_or_null(len))
+        self.assertIsNone(empty.min_of_or_none(len))
+    
+    def test_max_of_with(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test max_of_with with custom comparator
+        def reverse_comparator(a, b):
+            return b - a  # Reverse order
+        
+        result = lst.max_of_with_or_null(reverse_comparator, lambda x: x)
+        self.assertEqual(result, 1)  # Minimum in normal order
+        
+        # Test alias
+        result2 = lst.max_of_with_or_none(reverse_comparator, lambda x: x)
+        self.assertEqual(result2, 1)
+        
+        # Test max_of_with (non-null version) with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError) as cm:
+            empty.max_of_with(reverse_comparator, lambda x: x)
+        self.assertIn("Cannot find max of empty list", str(cm.exception))
+        
+        # Test max_of_with with non-empty list
+        result3 = lst.max_of_with(reverse_comparator, lambda x: x * 2)
+        self.assertEqual(result3, 2)  # 1 * 2 = 2 (minimum * 2)
+        
+        # Test max_of_with where multiple comparisons update the result
+        # Normal comparator to test the loop properly
+        def normal_comparator(a, b):
+            return a - b
+        
+        result4 = lst.max_of_with(normal_comparator, lambda x: x)
+        self.assertEqual(result4, 5)  # Maximum value
+        
+        # Test with more complex data
+        strings = KotList(['a', 'bb', 'ccc', 'dd', 'e'])
+        result5 = strings.max_of_with(lambda a, b: len(a) - len(b), lambda x: x)
+        self.assertEqual(result5, 'ccc')  # Longest string
+    
+    def test_min_of_with(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test min_of_with with custom comparator
+        def reverse_comparator(a, b):
+            return b - a  # Reverse order
+        
+        result = lst.min_of_with_or_null(reverse_comparator, lambda x: x)
+        self.assertEqual(result, 5)  # Maximum in normal order
+        
+        # Test alias
+        result2 = lst.min_of_with_or_none(reverse_comparator, lambda x: x)
+        self.assertEqual(result2, 5)
+        
+        # Test min_of_with (non-null version) with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError) as cm:
+            empty.min_of_with(reverse_comparator, lambda x: x)
+        self.assertIn("Cannot find min of empty list", str(cm.exception))
+        
+        # Test min_of_with with non-empty list
+        result3 = lst.min_of_with(reverse_comparator, lambda x: x * 2)
+        self.assertEqual(result3, 10)  # 5 * 2 = 10 (maximum * 2)
+        
+        # Test min_of_with where multiple comparisons update the result
+        # Normal comparator to test the loop properly
+        def normal_comparator(a, b):
+            return a - b
+        
+        result4 = lst.min_of_with(normal_comparator, lambda x: x)
+        self.assertEqual(result4, 1)  # Minimum value
+        
+        # Test with more complex data
+        strings = KotList(['aaa', 'bb', 'c', 'dd', 'eee'])
+        result5 = strings.min_of_with(lambda a, b: len(a) - len(b), lambda x: x)
+        self.assertEqual(result5, 'c')  # Shortest string
+
+
+class TestKotListAdvancedFoldReduce(unittest.TestCase):
+    def test_fold_indexed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test fold_indexed
+        result = lst.fold_indexed(0, lambda i, acc, x: acc + x * i)
+        self.assertEqual(result, 0 + 0*1 + 1*2 + 2*3 + 3*4 + 4*5)  # 0 + 0 + 2 + 6 + 12 + 20 = 40
+    
+    def test_fold_right(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test fold_right
+        result = lst.fold_right('', lambda x, acc: str(x) + acc)
+        self.assertEqual(result, '12345')
+    
+    def test_fold_right_indexed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test fold_right_indexed
+        result = lst.fold_right_indexed(0, lambda i, x, acc: acc + x * i)
+        self.assertEqual(result, 4*5 + 3*4 + 2*3 + 1*2 + 0*1)  # 20 + 12 + 6 + 2 + 0 = 40
+    
+    def test_reduce_indexed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test reduce_indexed
+        result = lst.reduce_indexed(lambda i, acc, x: acc + x * i)
+        self.assertEqual(result, 1 + 2*1 + 3*2 + 4*3 + 5*4)  # 1 + 2 + 6 + 12 + 20 = 41
+        
+        # Test with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError):
+            empty.reduce_indexed(lambda i, acc, x: acc + x)
+    
+    def test_reduce_right(self):
+        lst = KotList(['a', 'b', 'c', 'd'])
+        
+        # Test reduce_right
+        result = lst.reduce_right(lambda x, acc: x + acc)
+        self.assertEqual(result, 'abcd')
+        
+        # Test with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError) as cm:
+            empty.reduce_right(lambda x, acc: x + acc)
+        self.assertIn("Cannot reduce empty list", str(cm.exception))
+    
+    def test_reduce_right_indexed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test reduce_right_indexed
+        result = lst.reduce_right_indexed(lambda i, x, acc: x * i + acc)
+        self.assertEqual(result, 0*1 + 1*2 + 2*3 + 3*4 + 5)  # 0 + 2 + 6 + 12 + 5 = 25
+        
+        # Test with empty list
+        empty = KotList()
+        with self.assertRaises(ValueError) as cm:
+            empty.reduce_right_indexed(lambda i, x, acc: x + acc)
+        self.assertIn("Cannot reduce empty list", str(cm.exception))
+    
+    def test_reduce_variations_or_null(self):
+        lst = KotList([1, 2, 3])
+        empty = KotList()
+        
+        # Test reduce_or_null
+        self.assertEqual(lst.reduce_or_null(lambda a, b: a + b), 6)
+        self.assertIsNone(empty.reduce_or_null(lambda a, b: a + b))
+        self.assertIsNone(empty.reduce_or_none(lambda a, b: a + b))  # alias
+        
+        # Test reduce_indexed_or_null
+        self.assertEqual(lst.reduce_indexed_or_null(lambda i, a, b: a + b * i), 1 + 2*1 + 3*2)
+        self.assertIsNone(empty.reduce_indexed_or_null(lambda i, a, b: a + b))
+        self.assertIsNone(empty.reduce_indexed_or_none(lambda i, a, b: a + b))  # alias
+        
+        # Test reduce_right_or_null
+        self.assertEqual(lst.reduce_right_or_null(lambda a, b: str(a) + str(b)), '123')
+        self.assertIsNone(empty.reduce_right_or_null(lambda a, b: a + b))
+        self.assertIsNone(empty.reduce_right_or_none(lambda a, b: a + b))  # alias
+        
+        # Test reduce_right_indexed_or_null
+        self.assertEqual(lst.reduce_right_indexed_or_null(lambda i, a, b: a * i + b), 0*1 + 1*2 + 3)
+        self.assertIsNone(empty.reduce_right_indexed_or_null(lambda i, a, b: a + b))
+        self.assertIsNone(empty.reduce_right_indexed_or_none(lambda i, a, b: a + b))  # alias
+    
+    def test_running_fold(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test running_fold (should be same as scan)
+        result = lst.running_fold(0, lambda acc, x: acc + x)
+        self.assertEqual(result.to_list(), [0, 1, 3, 6, 10, 15])
+    
+    def test_running_fold_indexed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test running_fold_indexed
+        result = lst.running_fold_indexed(0, lambda i, acc, x: acc + x * i)
+        self.assertEqual(result.to_list(), [0, 0, 2, 8, 20, 40])
+    
+    def test_scan_indexed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test scan_indexed (alias for running_fold_indexed)
+        result = lst.scan_indexed(0, lambda i, acc, x: acc + x * i)
+        self.assertEqual(result.to_list(), [0, 0, 2, 8, 20, 40])
+    
+    def test_running_reduce(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test running_reduce
+        result = lst.running_reduce(lambda acc, x: acc + x)
+        self.assertEqual(result.to_list(), [1, 3, 6, 10, 15])
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertEqual(empty.running_reduce(lambda a, b: a + b).to_list(), [])
+    
+    def test_running_reduce_indexed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test running_reduce_indexed
+        result = lst.running_reduce_indexed(lambda i, acc, x: acc + x * i)
+        self.assertEqual(result.to_list(), [1, 3, 9, 21, 41])
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertEqual(empty.running_reduce_indexed(lambda i, acc, x: acc + x).to_list(), [])
+
+
+class TestKotListOtherMethods(unittest.TestCase):
+    def test_as_reversed(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test as_reversed
+        reversed_lst = lst.as_reversed()
+        self.assertEqual(reversed_lst.to_list(), [5, 4, 3, 2, 1])
+    
+    def test_as_sequence(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test as_sequence
+        seq = lst.as_sequence()
+        self.assertEqual(list(seq), [1, 2, 3, 4, 5])
+    
+    def test_with_index(self):
+        lst = KotList(['a', 'b', 'c'])
+        
+        # Test with_index
+        indexed = list(lst.with_index())
+        self.assertEqual(indexed, [(0, 'a'), (1, 'b'), (2, 'c')])
+    
+    def test_on_each_indexed(self):
+        lst = KotList([1, 2, 3])
+        
+        # Test on_each_indexed
+        results = []
+        returned = lst.on_each_indexed(lambda i, x: results.append((i, x)))
+        self.assertEqual(results, [(0, 1), (1, 2), (2, 3)])
+        self.assertIs(returned, lst)  # Should return self
+    
+    def test_if_empty(self):
+        # Test with non-empty list
+        lst = KotList([1, 2, 3])
+        result = lst.if_empty(lambda: KotList([4, 5, 6]))
+        self.assertEqual(result.to_list(), [1, 2, 3])
+        
+        # Test with empty list
+        empty = KotList()
+        result = empty.if_empty(lambda: KotList([4, 5, 6]))
+        self.assertEqual(result.to_list(), [4, 5, 6])
+    
+    def test_list_iterator(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        
+        # Test list_iterator from beginning
+        it = lst.list_iterator()
+        self.assertEqual(list(it), [1, 2, 3, 4, 5])
+        
+        # Test list_iterator from index
+        it = lst.list_iterator(2)
+        self.assertEqual(list(it), [3, 4, 5])
+        
+        # Test with invalid index
+        with self.assertRaises(IndexError):
+            lst.list_iterator(-1)
+        with self.assertRaises(IndexError):
+            lst.list_iterator(6)
+    
+    def test_operator_overloads(self):
+        lst1 = KotList([1, 2, 3])
+        lst2 = KotList([4, 5])
+        
+        # Test + operator
+        result = lst1 + 4
+        self.assertEqual(result.to_list(), [1, 2, 3, 4])
+        
+        result = lst1 + [4, 5]
+        self.assertEqual(result.to_list(), [1, 2, 3, 4, 5])
+        
+        # Test - operator
+        lst3 = KotList([1, 2, 3, 2, 4])
+        result = lst3 - 2
+        self.assertEqual(result.to_list(), [1, 3, 2, 4])  # Only first occurrence removed
+        
+        result = lst3 - [2, 4]
+        self.assertEqual(result.to_list(), [1, 3])  # All occurrences removed

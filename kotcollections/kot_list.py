@@ -1,6 +1,6 @@
 from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Set, Dict, Union
 from collections.abc import Iterable
-import random
+import random as _random
 import bisect
 from functools import reduce
 
@@ -373,12 +373,12 @@ class KotList(Generic[T]):
     def reversed(self) -> 'KotList[T]':
         return KotList(reversed(self._elements))
     
-    def shuffled(self, random_instance: Optional[random.Random] = None) -> 'KotList[T]':
+    def shuffled(self, random_instance: Optional[_random.Random] = None) -> 'KotList[T]':
         elements_copy = self._elements.copy()
         if random_instance:
             random_instance.shuffle(elements_copy)
         else:
-            random.shuffle(elements_copy)
+            _random.shuffle(elements_copy)
         return KotList(elements_copy)
     
     def group_by(self, key_selector: Callable[[T], K]) -> Dict[K, 'KotList[T]']:
@@ -563,3 +563,521 @@ class KotList(Generic[T]):
         
         result += postfix
         return result
+    
+    # Element retrieval methods
+    def component1(self) -> T:
+        """Returns the first element (for destructuring declarations)."""
+        return self.get(0)
+    
+    def component2(self) -> T:
+        """Returns the second element (for destructuring declarations)."""
+        return self.get(1)
+    
+    def component3(self) -> T:
+        """Returns the third element (for destructuring declarations)."""
+        return self.get(2)
+    
+    def component4(self) -> T:
+        """Returns the fourth element (for destructuring declarations)."""
+        return self.get(3)
+    
+    def component5(self) -> T:
+        """Returns the fifth element (for destructuring declarations)."""
+        return self.get(4)
+    
+    def single(self) -> T:
+        """Returns the single element, or throws an exception if the list is empty or has more than one element."""
+        if self.size == 0:
+            raise ValueError("List is empty")
+        if self.size > 1:
+            raise ValueError("List has more than one element")
+        return self._elements[0]
+    
+    def single_or_null(self) -> Optional[T]:
+        """Returns the single element, or null if the list is empty or has more than one element."""
+        return self._elements[0] if self.size == 1 else None
+    
+    def single_or_none(self) -> Optional[T]:
+        """Alias for single_or_null() - more Pythonic naming."""
+        return self.single_or_null()
+    
+    def single_predicate(self, predicate: Callable[[T], bool]) -> T:
+        """Returns the single element matching the given predicate, or throws exception if there is no or more than one matching element."""
+        found = None
+        found_multiple = False
+        
+        for element in self._elements:
+            if predicate(element):
+                if found is not None:
+                    found_multiple = True
+                    break
+                found = element
+        
+        if found is None:
+            raise ValueError("No element matching predicate found")
+        if found_multiple:
+            raise ValueError("More than one element matching predicate found")
+        
+        return found
+    
+    def single_or_null_predicate(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Returns the single element matching the given predicate, or null if element was not found or more than one element was found."""
+        found = None
+        found_multiple = False
+        
+        for element in self._elements:
+            if predicate(element):
+                if found is not None:
+                    return None
+                found = element
+        
+        return found
+    
+    def single_or_none_predicate(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Alias for single_or_null_predicate() - more Pythonic naming."""
+        return self.single_or_null_predicate(predicate)
+    
+    def random(self, random_instance: Optional[_random.Random] = None) -> T:
+        """Returns a random element from this list."""
+        if self.is_empty():
+            raise IndexError("List is empty")
+        if random_instance:
+            return random_instance.choice(self._elements)
+        return _random.choice(self._elements)
+    
+    def random_or_null(self, random_instance: Optional[_random.Random] = None) -> Optional[T]:
+        """Returns a random element from this list, or null if this list is empty."""
+        if self.is_empty():
+            return None
+        if random_instance:
+            return random_instance.choice(self._elements)
+        return _random.choice(self._elements)
+    
+    def random_or_none(self, random_instance: Optional[_random.Random] = None) -> Optional[T]:
+        """Alias for random_or_null() - more Pythonic naming."""
+        return self.random_or_null(random_instance)
+    
+    # Sublist retrieval methods
+    def slice(self, indices: Iterable[int]) -> 'KotList[T]':
+        """Returns a list containing elements at specified indices."""
+        result = []
+        for index in indices:
+            if 0 <= index < self.size:
+                result.append(self._elements[index])
+            else:
+                raise IndexError(f"Index {index} out of bounds for list of size {self.size}")
+        return KotList(result)
+    
+    def take(self, n: int) -> 'KotList[T]':
+        """Returns a list containing first n elements."""
+        if n < 0:
+            raise ValueError("Requested element count is less than zero")
+        return KotList(self._elements[:n])
+    
+    def take_last(self, n: int) -> 'KotList[T]':
+        """Returns a list containing last n elements."""
+        if n < 0:
+            raise ValueError("Requested element count is less than zero")
+        if n == 0:
+            return KotList()
+        return KotList(self._elements[-n:])
+    
+    def take_while(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
+        """Returns a list containing first elements satisfying the given predicate."""
+        result = []
+        for element in self._elements:
+            if predicate(element):
+                result.append(element)
+            else:
+                break
+        return KotList(result)
+    
+    def take_last_while(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
+        """Returns a list containing last elements satisfying the given predicate."""
+        result = []
+        for element in reversed(self._elements):
+            if predicate(element):
+                result.append(element)
+            else:
+                break
+        return KotList(reversed(result))
+    
+    def drop(self, n: int) -> 'KotList[T]':
+        """Returns a list containing all elements except first n elements."""
+        if n < 0:
+            raise ValueError("Requested element count is less than zero")
+        return KotList(self._elements[n:])
+    
+    def drop_last(self, n: int) -> 'KotList[T]':
+        """Returns a list containing all elements except last n elements."""
+        if n < 0:
+            raise ValueError("Requested element count is less than zero")
+        if n == 0:
+            return KotList(self._elements)
+        return KotList(self._elements[:-n])
+    
+    def drop_while(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
+        """Returns a list containing all elements except first elements that satisfy the given predicate."""
+        index = 0
+        for i, element in enumerate(self._elements):
+            if not predicate(element):
+                index = i
+                break
+        else:
+            return KotList()
+        return KotList(self._elements[index:])
+    
+    def drop_last_while(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
+        """Returns a list containing all elements except last elements that satisfy the given predicate."""
+        index = len(self._elements)
+        for i in range(len(self._elements) - 1, -1, -1):
+            if not predicate(self._elements[i]):
+                index = i + 1
+                break
+        else:
+            return KotList()
+        return KotList(self._elements[:index])
+    
+    # Transformation methods
+    def map_indexed_not_null(self, transform: Callable[[int, T], Optional[R]]) -> 'KotList[R]':
+        """Returns a list containing only the non-null results of applying the given transform function to each element and its index."""
+        result = []
+        for i, element in enumerate(self._elements):
+            transformed = transform(i, element)
+            if transformed is not None:
+                result.append(transformed)
+        return KotList(result)
+    
+    def map_indexed_not_none(self, transform: Callable[[int, T], Optional[R]]) -> 'KotList[R]':
+        """Alias for map_indexed_not_null() - more Pythonic naming."""
+        return self.map_indexed_not_null(transform)
+    
+    def flat_map_indexed(self, transform: Callable[[int, T], Iterable[R]]) -> 'KotList[R]':
+        """Returns a single list of all elements yielded from results of transform function being invoked on each element and its index."""
+        result = []
+        for i, element in enumerate(self._elements):
+            result.extend(transform(i, element))
+        return KotList(result)
+    
+    def zip_with_next(self) -> 'KotList[Tuple[T, T]]':
+        """Returns a list of pairs of each two adjacent elements in this list."""
+        if self.size < 2:
+            return KotList()
+        result = []
+        for i in range(self.size - 1):
+            result.append((self._elements[i], self._elements[i + 1]))
+        return KotList(result)
+    
+    def zip_with_next_transform(self, transform: Callable[[T, T], R]) -> 'KotList[R]':
+        """Returns a list containing the results of applying the given transform function to each pair of two adjacent elements."""
+        if self.size < 2:
+            return KotList()
+        result = []
+        for i in range(self.size - 1):
+            result.append(transform(self._elements[i], self._elements[i + 1]))
+        return KotList(result)
+    
+    # Search methods
+    def find(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Returns the first element matching the given predicate, or null if no such element was found."""
+        return self.first_or_null_predicate(predicate)
+    
+    def find_last(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Returns the last element matching the given predicate, or null if no such element was found."""
+        return self.last_or_null_predicate(predicate)
+    
+    def first_not_null_of(self, transform: Callable[[T], Optional[R]]) -> R:
+        """Returns the first non-null value produced by transform function or throws NoSuchElementException."""
+        for element in self._elements:
+            result = transform(element)
+            if result is not None:
+                return result
+        raise ValueError("No non-null value found")
+    
+    def first_not_null_of_or_null(self, transform: Callable[[T], Optional[R]]) -> Optional[R]:
+        """Returns the first non-null value produced by transform function or null."""
+        for element in self._elements:
+            result = transform(element)
+            if result is not None:
+                return result
+        return None
+    
+    def first_not_none_of(self, transform: Callable[[T], Optional[R]]) -> R:
+        """Alias for first_not_null_of() - more Pythonic naming."""
+        return self.first_not_null_of(transform)
+    
+    def first_not_none_of_or_none(self, transform: Callable[[T], Optional[R]]) -> Optional[R]:
+        """Alias for first_not_null_of_or_null() - more Pythonic naming."""
+        return self.first_not_null_of_or_null(transform)
+    
+    # Aggregation methods
+    def max_by(self, selector: Callable[[T], Any]) -> T:
+        """Returns the first element yielding the largest value of the given function."""
+        if self.is_empty():
+            raise ValueError("Cannot find max of empty list")
+        return max(self._elements, key=selector)
+    
+    def min_by(self, selector: Callable[[T], Any]) -> T:
+        """Returns the first element yielding the smallest value of the given function."""
+        if self.is_empty():
+            raise ValueError("Cannot find min of empty list")
+        return min(self._elements, key=selector)
+    
+    def max_of(self, selector: Callable[[T], Any]) -> Any:
+        """Returns the largest value among all values produced by selector function."""
+        if self.is_empty():
+            raise ValueError("Cannot find max of empty list")
+        return max(selector(element) for element in self._elements)
+    
+    def min_of(self, selector: Callable[[T], Any]) -> Any:
+        """Returns the smallest value among all values produced by selector function."""
+        if self.is_empty():
+            raise ValueError("Cannot find min of empty list")
+        return min(selector(element) for element in self._elements)
+    
+    def max_of_or_null(self, selector: Callable[[T], Any]) -> Optional[Any]:
+        """Returns the largest value among all values produced by selector function or null if there are no elements."""
+        if self.is_empty():
+            return None
+        return max(selector(element) for element in self._elements)
+    
+    def max_of_or_none(self, selector: Callable[[T], Any]) -> Optional[Any]:
+        """Alias for max_of_or_null() - more Pythonic naming."""
+        return self.max_of_or_null(selector)
+    
+    def min_of_or_null(self, selector: Callable[[T], Any]) -> Optional[Any]:
+        """Returns the smallest value among all values produced by selector function or null if there are no elements."""
+        if self.is_empty():
+            return None
+        return min(selector(element) for element in self._elements)
+    
+    def min_of_or_none(self, selector: Callable[[T], Any]) -> Optional[Any]:
+        """Alias for min_of_or_null() - more Pythonic naming."""
+        return self.min_of_or_null(selector)
+    
+    def max_of_with(self, comparator: Callable[[Any, Any], int], selector: Callable[[T], Any]) -> Any:
+        """Returns the largest value according to the provided comparator among all values produced by selector function."""
+        if self.is_empty():
+            raise ValueError("Cannot find max of empty list")
+        values = [selector(element) for element in self._elements]
+        # Python doesn't have cmp parameter in max/min, so we need to use a different approach
+        result = values[0]
+        for value in values[1:]:
+            if comparator(value, result) > 0:
+                result = value
+        return result
+    
+    def min_of_with(self, comparator: Callable[[Any, Any], int], selector: Callable[[T], Any]) -> Any:
+        """Returns the smallest value according to the provided comparator among all values produced by selector function."""
+        if self.is_empty():
+            raise ValueError("Cannot find min of empty list")
+        values = [selector(element) for element in self._elements]
+        # Python doesn't have cmp parameter in max/min, so we need to use a different approach
+        result = values[0]
+        for value in values[1:]:
+            if comparator(value, result) < 0:
+                result = value
+        return result
+    
+    def max_of_with_or_null(self, comparator: Callable[[Any, Any], int], selector: Callable[[T], Any]) -> Optional[Any]:
+        """Returns the largest value according to the provided comparator among all values produced by selector function or null."""
+        if self.is_empty():
+            return None
+        values = [selector(element) for element in self._elements]
+        # Python doesn't have cmp parameter in max/min, so we need to use a different approach
+        result = values[0]
+        for value in values[1:]:
+            if comparator(value, result) > 0:
+                result = value
+        return result
+    
+    def max_of_with_or_none(self, comparator: Callable[[Any, Any], int], selector: Callable[[T], Any]) -> Optional[Any]:
+        """Alias for max_of_with_or_null() - more Pythonic naming."""
+        return self.max_of_with_or_null(comparator, selector)
+    
+    def min_of_with_or_null(self, comparator: Callable[[Any, Any], int], selector: Callable[[T], Any]) -> Optional[Any]:
+        """Returns the smallest value according to the provided comparator among all values produced by selector function or null."""
+        if self.is_empty():
+            return None
+        values = [selector(element) for element in self._elements]
+        # Python doesn't have cmp parameter in max/min, so we need to use a different approach
+        result = values[0]
+        for value in values[1:]:
+            if comparator(value, result) < 0:
+                result = value
+        return result
+    
+    def min_of_with_or_none(self, comparator: Callable[[Any, Any], int], selector: Callable[[T], Any]) -> Optional[Any]:
+        """Alias for min_of_with_or_null() - more Pythonic naming."""
+        return self.min_of_with_or_null(comparator, selector)
+    
+    # Fold/Reduce variations
+    def fold_indexed(self, initial: R, operation: Callable[[int, R, T], R]) -> R:
+        """Accumulates value starting with initial value and applying operation from left to right to current accumulator value and each element with its index."""
+        result = initial
+        for i, element in enumerate(self._elements):
+            result = operation(i, result, element)
+        return result
+    
+    def fold_right(self, initial: R, operation: Callable[[T, R], R]) -> R:
+        """Accumulates value starting with initial value and applying operation from right to left to each element and current accumulator value."""
+        result = initial
+        for element in reversed(self._elements):
+            result = operation(element, result)
+        return result
+    
+    def fold_right_indexed(self, initial: R, operation: Callable[[int, T, R], R]) -> R:
+        """Accumulates value starting with initial value and applying operation from right to left to each element with its index and current accumulator value."""
+        result = initial
+        for i in range(len(self._elements) - 1, -1, -1):
+            result = operation(i, self._elements[i], result)
+        return result
+    
+    def reduce_indexed(self, operation: Callable[[int, T, T], T]) -> T:
+        """Accumulates value starting with the first element and applying operation from left to right to current accumulator value and each element with its index."""
+        if self.is_empty():
+            raise ValueError("Cannot reduce empty list")
+        result = self._elements[0]
+        for i in range(1, len(self._elements)):
+            result = operation(i, result, self._elements[i])
+        return result
+    
+    def reduce_right(self, operation: Callable[[T, T], T]) -> T:
+        """Accumulates value starting with the last element and applying operation from right to left to each element and current accumulator value."""
+        if self.is_empty():
+            raise ValueError("Cannot reduce empty list")
+        result = self._elements[-1]
+        for i in range(len(self._elements) - 2, -1, -1):
+            result = operation(self._elements[i], result)
+        return result
+    
+    def reduce_right_indexed(self, operation: Callable[[int, T, T], T]) -> T:
+        """Accumulates value starting with the last element and applying operation from right to left to each element with its index and current accumulator value."""
+        if self.is_empty():
+            raise ValueError("Cannot reduce empty list")
+        result = self._elements[-1]
+        for i in range(len(self._elements) - 2, -1, -1):
+            result = operation(i, self._elements[i], result)
+        return result
+    
+    def reduce_indexed_or_null(self, operation: Callable[[int, T, T], T]) -> Optional[T]:
+        """Accumulates value starting with the first element and applying operation from left to right, or null if the list is empty."""
+        if self.is_empty():
+            return None
+        return self.reduce_indexed(operation)
+    
+    def reduce_indexed_or_none(self, operation: Callable[[int, T, T], T]) -> Optional[T]:
+        """Alias for reduce_indexed_or_null() - more Pythonic naming."""
+        return self.reduce_indexed_or_null(operation)
+    
+    def reduce_right_or_null(self, operation: Callable[[T, T], T]) -> Optional[T]:
+        """Accumulates value starting with the last element and applying operation from right to left, or null if the list is empty."""
+        if self.is_empty():
+            return None
+        return self.reduce_right(operation)
+    
+    def reduce_right_or_none(self, operation: Callable[[T, T], T]) -> Optional[T]:
+        """Alias for reduce_right_or_null() - more Pythonic naming."""
+        return self.reduce_right_or_null(operation)
+    
+    def reduce_right_indexed_or_null(self, operation: Callable[[int, T, T], T]) -> Optional[T]:
+        """Accumulates value starting with the last element and applying operation from right to left with indices, or null if the list is empty."""
+        if self.is_empty():
+            return None
+        return self.reduce_right_indexed(operation)
+    
+    def reduce_right_indexed_or_none(self, operation: Callable[[int, T, T], T]) -> Optional[T]:
+        """Alias for reduce_right_indexed_or_null() - more Pythonic naming."""
+        return self.reduce_right_indexed_or_null(operation)
+    
+    def reduce_or_null(self, operation: Callable[[T, T], T]) -> Optional[T]:
+        """Accumulates value starting with the first element and applying operation from left to right, or null if the list is empty."""
+        if self.is_empty():
+            return None
+        return self.reduce(operation)
+    
+    def reduce_or_none(self, operation: Callable[[T, T], T]) -> Optional[T]:
+        """Alias for reduce_or_null() - more Pythonic naming."""
+        return self.reduce_or_null(operation)
+    
+    def running_fold(self, initial: R, operation: Callable[[R, T], R]) -> 'KotList[R]':
+        """Returns a list containing successive accumulation values generated by applying operation from left to right."""
+        # This is the same as scan, which is already implemented
+        return self.scan(initial, operation)
+    
+    def running_fold_indexed(self, initial: R, operation: Callable[[int, R, T], R]) -> 'KotList[R]':
+        """Returns a list containing successive accumulation values generated by applying operation from left to right with indices."""
+        result = [initial]
+        acc = initial
+        for i, element in enumerate(self._elements):
+            acc = operation(i, acc, element)
+            result.append(acc)
+        return KotList(result)
+    
+    def scan_indexed(self, initial: R, operation: Callable[[int, R, T], R]) -> 'KotList[R]':
+        """Returns a list containing successive accumulation values generated by applying operation from left to right with indices."""
+        return self.running_fold_indexed(initial, operation)
+    
+    def running_reduce(self, operation: Callable[[T, T], T]) -> 'KotList[T]':
+        """Returns a list containing successive accumulation values generated by applying operation from left to right."""
+        if self.is_empty():
+            return KotList()
+        result = [self._elements[0]]
+        acc = self._elements[0]
+        for element in self._elements[1:]:
+            acc = operation(acc, element)
+            result.append(acc)
+        return KotList(result)
+    
+    def running_reduce_indexed(self, operation: Callable[[int, T, T], T]) -> 'KotList[T]':
+        """Returns a list containing successive accumulation values generated by applying operation from left to right with indices."""
+        if self.is_empty():
+            return KotList()
+        result = [self._elements[0]]
+        acc = self._elements[0]
+        for i in range(1, len(self._elements)):
+            acc = operation(i, acc, self._elements[i])
+            result.append(acc)
+        return KotList(result)
+    
+    # Other methods
+    def as_reversed(self) -> 'KotList[T]':
+        """Returns a reversed read-only view of the original List."""
+        # In Python, we'll return a new KotList with reversed elements
+        # since we don't have true "view" semantics like Kotlin
+        return self.reversed()
+    
+    def as_sequence(self) -> Iterator[T]:
+        """Creates a Sequence instance that wraps the original list."""
+        # In Python, we'll return an iterator
+        return iter(self._elements)
+    
+    def with_index(self) -> Iterator[Tuple[int, T]]:
+        """Returns a lazy Iterable of IndexedValue for each element of the original list."""
+        return enumerate(self._elements)
+    
+    def on_each_indexed(self, action: Callable[[int, T], None]) -> 'KotList[T]':
+        """Performs the given action on each element with its index, returning the list itself afterwards."""
+        for i, element in enumerate(self._elements):
+            action(i, element)
+        return self
+    
+    def if_empty(self, default_value: Callable[[], 'KotList[T]']) -> 'KotList[T]':
+        """Returns this list if it's not empty or the result of calling defaultValue function if the list is empty."""
+        return self if self.is_not_empty() else default_value()
+    
+    # ListIterator methods
+    def list_iterator(self, index: int = 0) -> Iterator[T]:
+        """Returns a list iterator over the elements in this list."""
+        if index < 0 or index > self.size:
+            raise IndexError(f"Index {index} out of bounds for list of size {self.size}")
+        return iter(self._elements[index:])
+    
+    # Operator overloads
+    def __add__(self, other: Union[T, Iterable[T]]) -> 'KotList[T]':
+        """Overload + operator for plus() method."""
+        return self.plus(other)
+    
+    def __sub__(self, other: Union[T, Iterable[T]]) -> 'KotList[T]':
+        """Overload - operator for minus() method."""
+        return self.minus(other)
