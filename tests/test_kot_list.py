@@ -915,16 +915,18 @@ class TestKotListConversion(unittest.TestCase):
         self.assertEqual(mutable.to_list(), [1, 2, 3])
 
     def test_to_set(self):
+        from kotcollections.kot_set import KotSet
         lst = KotList([1, 2, 2, 3, 3, 3])
-        python_set = lst.to_set()
-        self.assertEqual(python_set, {1, 2, 3})
-        self.assertIsInstance(python_set, set)
+        kot_set = lst.to_set()
+        self.assertEqual(kot_set._elements, {1, 2, 3})
+        self.assertIsInstance(kot_set, KotSet)
 
     def test_to_mutable_set(self):
+        from kotcollections.kot_mutable_set import KotMutableSet
         lst = KotList([1, 2, 2, 3, 3, 3])
-        python_set = lst.to_mutable_set()
-        self.assertEqual(python_set, {1, 2, 3})
-        self.assertIsInstance(python_set, set)
+        kot_mutable_set = lst.to_mutable_set()
+        self.assertEqual(kot_mutable_set._elements, {1, 2, 3})
+        self.assertIsInstance(kot_mutable_set, KotMutableSet)
 
 
 class TestKotListJoinToString(unittest.TestCase):

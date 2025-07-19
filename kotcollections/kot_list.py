@@ -575,11 +575,13 @@ class KotList(Generic[T]):
         from .kot_mutable_list import KotMutableList
         return KotMutableList(self._elements)
 
-    def to_set(self) -> Set[T]:
-        return set(self._elements)
+    def to_set(self) -> 'KotSet[T]':
+        from .kot_set import KotSet
+        return KotSet(self._elements)
 
-    def to_mutable_set(self) -> Set[T]:
-        return set(self._elements)
+    def to_mutable_set(self) -> 'KotMutableSet[T]':
+        from .kot_mutable_set import KotMutableSet
+        return KotMutableSet(self._elements)
 
     def join_to_string(
         self, separator: str = ", ", prefix: str = "", postfix: str = "",
