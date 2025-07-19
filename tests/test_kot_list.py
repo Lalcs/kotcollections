@@ -211,28 +211,66 @@ class TestKotListSearch(unittest.TestCase):
         self.assertTrue(lst.contains_all([1, 3, 5]))
         self.assertFalse(lst.contains_all([1, 3, 6]))
         self.assertTrue(lst.contains_all([]))
+        
+        # Test with duplicate elements in input
+        self.assertTrue(lst.contains_all([1, 1, 3, 3, 5]))
+        
+        # Test with all elements not in list
+        self.assertFalse(lst.contains_all([6, 7, 8]))
 
     def test_index_of(self):
         lst = KotList([1, 2, 3, 2, 5])
         self.assertEqual(lst.index_of(2), 1)
         self.assertEqual(lst.index_of(5), 4)
         self.assertEqual(lst.index_of(6), -1)
+        
+        # Test with element at the beginning
+        self.assertEqual(lst.index_of(1), 0)
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertEqual(empty.index_of(1), -1)
 
     def test_last_index_of(self):
         lst = KotList([1, 2, 3, 2, 5])
         self.assertEqual(lst.last_index_of(2), 3)
         self.assertEqual(lst.last_index_of(1), 0)
         self.assertEqual(lst.last_index_of(6), -1)
+        
+        # Test with single occurrence at the end
+        self.assertEqual(lst.last_index_of(5), 4)
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertEqual(empty.last_index_of(1), -1)
+        
+        # Test with all same elements
+        same = KotList([2, 2, 2, 2])
+        self.assertEqual(same.last_index_of(2), 3)
 
     def test_index_of_first(self):
         lst = KotList([1, 2, 3, 4, 5])
         self.assertEqual(lst.index_of_first(lambda x: x > 3), 3)
         self.assertEqual(lst.index_of_first(lambda x: x > 10), -1)
+        
+        # Test finding first element
+        self.assertEqual(lst.index_of_first(lambda x: x == 1), 0)
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertEqual(empty.index_of_first(lambda x: True), -1)
 
     def test_index_of_last(self):
         lst = KotList([1, 2, 3, 4, 5])
         self.assertEqual(lst.index_of_last(lambda x: x < 4), 2)
         self.assertEqual(lst.index_of_last(lambda x: x > 10), -1)
+        
+        # Test finding last element
+        self.assertEqual(lst.index_of_last(lambda x: x == 5), 4)
+        
+        # Test with empty list
+        empty = KotList()
+        self.assertEqual(empty.index_of_last(lambda x: True), -1)
 
     def test_binary_search_default(self):
         lst = KotList([1, 3, 5, 7, 9])
@@ -244,6 +282,16 @@ class TestKotListSearch(unittest.TestCase):
         self.assertEqual(lst.binary_search(0), -1)
         self.assertEqual(lst.binary_search(4), -3)
         self.assertEqual(lst.binary_search(10), -6)
+        
+        # Test with element at the end of list matching
+        lst2 = KotList([1, 2, 3, 4, 5])
+        self.assertEqual(lst2.binary_search(5), 4)
+        
+        # Test with single element list
+        single = KotList([42])
+        self.assertEqual(single.binary_search(42), 0)
+        self.assertEqual(single.binary_search(41), -1)
+        self.assertEqual(single.binary_search(43), -2)
 
     def test_binary_search_comparator(self):
         lst = KotList([(1, 'a'), (3, 'b'), (5, 'c')])
@@ -292,6 +340,20 @@ class TestKotListSearch(unittest.TestCase):
         # Test not finding with comparisons that trigger all branches
         self.assertEqual(long_lst.binary_search(5, reverse_comparator), -4)  # Between 6 and 4
         self.assertEqual(long_lst.binary_search(-3, reverse_comparator), -8)  # Between -2 and -4
+        
+        # Test edge cases with single element and empty list
+        single = KotList([42])
+        empty = KotList()
+        
+        # Single element - found
+        self.assertEqual(single.binary_search(42, lambda a, b: a - b), 0)
+        # Single element - not found (less than)
+        self.assertEqual(single.binary_search(40, lambda a, b: a - b), -1)
+        # Single element - not found (greater than)
+        self.assertEqual(single.binary_search(45, lambda a, b: a - b), -2)
+        
+        # Empty list
+        self.assertEqual(empty.binary_search(10, lambda a, b: a - b), -1)
 
 
 class TestKotListTransform(unittest.TestCase):
@@ -599,6 +661,18 @@ class TestKotListGrouping(unittest.TestCase):
         windows_partial = lst.windowed(3, step=2, partial_windows=True)
         self.assertEqual(len(windows_partial), 3)
         self.assertEqual(windows_partial[2].to_list(), [5])
+        
+        # Test case where partial_windows=False and last window is smaller
+        # This should trigger the break statement (line 428->424)
+        lst2 = KotList([1, 2, 3, 4, 5, 6, 7])
+        windows_no_partial = lst2.windowed(3, step=3, partial_windows=False)
+        self.assertEqual(len(windows_no_partial), 2)  # Only [1,2,3] and [4,5,6], not [7]
+        self.assertEqual(windows_no_partial[0].to_list(), [1, 2, 3])
+        self.assertEqual(windows_no_partial[1].to_list(), [4, 5, 6])
+        
+        # Edge case: empty list
+        empty = KotList()
+        self.assertEqual(empty.windowed(3).to_list(), [])
 
         # Error cases
         with self.assertRaises(ValueError):
@@ -1143,7 +1217,7 @@ class TestKotListAdvancedTransform(unittest.TestCase):
         self.assertEqual(single.zip_with_next_transform(lambda a, b: a + b).to_list(), [])
 
 
-class TestKotListSearch(unittest.TestCase):
+class TestKotListNewSearch(unittest.TestCase):
     def test_find(self):
         lst = KotList([1, 2, 3, 4, 5])
         
@@ -1183,6 +1257,11 @@ class TestKotListSearch(unittest.TestCase):
         # Test alias
         result2 = lst.first_not_none_of_or_none(lambda x: x.upper() if x else None)
         self.assertIsNone(result2)
+        
+        # Test with some non-null results
+        lst2 = KotList(['', 'hello', 'world'])
+        result3 = lst2.first_not_null_of_or_null(lambda x: x.upper() if x else None)
+        self.assertEqual(result3, 'HELLO')
 
 
 class TestKotListAdvancedAggregation(unittest.TestCase):
@@ -1302,6 +1381,14 @@ class TestKotListAdvancedAggregation(unittest.TestCase):
         strings = KotList(['a', 'bb', 'ccc', 'dd', 'e'])
         result5 = strings.max_of_with(lambda a, b: len(a) - len(b), lambda x: x)
         self.assertEqual(result5, 'ccc')  # Longest string
+        
+        # Test max_of_with_or_null with empty list  
+        self.assertIsNone(empty.max_of_with_or_null(reverse_comparator, lambda x: x))
+        
+        # Test with list where loop iterates through all values
+        lst6 = KotList([3, 1, 4, 1, 5, 9, 2, 6, 5])
+        result6 = lst6.max_of_with_or_null(normal_comparator, lambda x: x)
+        self.assertEqual(result6, 9)
     
     def test_min_of_with(self):
         lst = KotList([1, 2, 3, 4, 5])
@@ -1339,6 +1426,14 @@ class TestKotListAdvancedAggregation(unittest.TestCase):
         strings = KotList(['aaa', 'bb', 'c', 'dd', 'eee'])
         result5 = strings.min_of_with(lambda a, b: len(a) - len(b), lambda x: x)
         self.assertEqual(result5, 'c')  # Shortest string
+        
+        # Test min_of_with_or_null with empty list
+        self.assertIsNone(empty.min_of_with_or_null(reverse_comparator, lambda x: x))
+        
+        # Test with list where loop iterates through all values
+        lst6 = KotList([3, 8, 4, 8, 5, 1, 2, 6, 5])
+        result6 = lst6.min_of_with_or_null(normal_comparator, lambda x: x)
+        self.assertEqual(result6, 1)
 
 
 class TestKotListAdvancedFoldReduce(unittest.TestCase):
