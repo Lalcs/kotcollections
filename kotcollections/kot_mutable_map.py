@@ -184,40 +184,6 @@ class KotMutableMap(KotMap[K, V]):
         self._put_with_type_check(key, new_value)
         return new_value
 
-    # Additional convenience methods
-
-    def set_default(self, key: K, default_value: V) -> V:
-        """If key is in the map, return its value. If not, insert key with a value of default_value and return default_value."""
-        if key in self._elements:
-            return self._elements[key]
-        self._put_with_type_check(key, default_value)
-        return default_value
-
-    def remove_all(self, predicate: Callable[[K, V], bool]) -> bool:
-        """Removes all entries that satisfy the given predicate.
-        
-        Returns:
-            true if any entries were removed.
-        """
-        keys_to_remove = [k for k, v in self._elements.items() if predicate(k, v)]
-        
-        if keys_to_remove:
-            for key in keys_to_remove:
-                del self._elements[key]
-            if self.is_empty():
-                self._key_type = None
-                self._value_type = None
-            return True
-        return False
-
-    def retain_all(self, predicate: Callable[[K, V], bool]) -> bool:
-        """Retains only entries that satisfy the given predicate.
-        
-        Returns:
-            true if any entries were removed.
-        """
-        return self.remove_all(lambda k, v: not predicate(k, v))
-
     # Bulk operations from other maps
 
     def plus_assign(self, other: Dict[K, V] | 'KotMap[K, V]' | Tuple[K, V]) -> None:
@@ -231,11 +197,6 @@ class KotMutableMap(KotMap[K, V]):
     def minus_assign(self, key: K) -> None:
         """Removes the specified key from this map."""
         self.remove(key)
-
-    def minus_assign_keys(self, keys: List[K] | Set[K]) -> None:
-        """Removes all specified keys from this map."""
-        for key in keys:
-            self.remove(key)
 
     # Python special methods for mutable operations
 

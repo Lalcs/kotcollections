@@ -195,45 +195,6 @@ class TestKotMutableMapRemoveOperations(unittest.TestCase):
         with self.assertRaises(KeyError):
             empty.popitem()
 
-    def test_remove_all(self):
-        """Test remove_all method."""
-        result = self.map.remove_all(lambda k, v: v > 2)
-        self.assertTrue(result)
-        self.assertEqual(self.map.size, 2)
-        self.assertTrue(self.map.contains_key("a"))
-        self.assertTrue(self.map.contains_key("b"))
-        self.assertFalse(self.map.contains_key("c"))
-        self.assertFalse(self.map.contains_key("d"))
-        
-        # No matches
-        result = self.map.remove_all(lambda k, v: v > 10)
-        self.assertFalse(result)
-        self.assertEqual(self.map.size, 2)
-        
-        # Remove all remaining elements (triggers type reset)
-        result = self.map.remove_all(lambda k, v: v <= 2)
-        self.assertTrue(result)
-        self.assertTrue(self.map.is_empty())
-        
-        # After removing all, should be able to add different types
-        self.map.put("new", "string")
-        self.assertEqual(self.map.get("new"), "string")
-
-    def test_retain_all(self):
-        """Test retain_all method."""
-        result = self.map.retain_all(lambda k, v: v > 2)
-        self.assertTrue(result)
-        self.assertEqual(self.map.size, 2)
-        self.assertFalse(self.map.contains_key("a"))
-        self.assertFalse(self.map.contains_key("b"))
-        self.assertTrue(self.map.contains_key("c"))
-        self.assertTrue(self.map.contains_key("d"))
-        
-        # All match
-        result = self.map.retain_all(lambda k, v: v > 0)
-        self.assertFalse(result)
-        self.assertEqual(self.map.size, 2)
-
 
 class TestKotMutableMapAdvancedOperations(unittest.TestCase):
     """Test KotMutableMap advanced operations."""
@@ -344,18 +305,6 @@ class TestKotMutableMapAdvancedOperations(unittest.TestCase):
         self.assertEqual(result, 11)
         self.assertEqual(self.map.get("a"), 11)
 
-    def test_set_default(self):
-        """Test set_default method."""
-        # Get existing value
-        result = self.map.set_default("a", 99)
-        self.assertEqual(result, 1)
-        self.assertEqual(self.map.get("a"), 1)
-        
-        # Set new value
-        result = self.map.set_default("c", 3)
-        self.assertEqual(result, 3)
-        self.assertEqual(self.map.get("c"), 3)
-
 
 class TestKotMutableMapBulkOperations(unittest.TestCase):
     """Test KotMutableMap bulk operations."""
@@ -385,22 +334,6 @@ class TestKotMutableMapBulkOperations(unittest.TestCase):
         self.map.minus_assign("a")
         self.assertFalse(self.map.contains_key("a"))
         self.assertEqual(self.map.size, 1)
-
-    def test_minus_assign_keys(self):
-        """Test minus_assign_keys method."""
-        self.map.put_all({"c": 3, "d": 4})
-        
-        # With list
-        self.map.minus_assign_keys(["a", "c"])
-        self.assertFalse(self.map.contains_key("a"))
-        self.assertFalse(self.map.contains_key("c"))
-        self.assertEqual(self.map.size, 2)
-        
-        # With set
-        self.map.minus_assign_keys({"b", "d", "z"})  # z doesn't exist
-        self.assertFalse(self.map.contains_key("b"))
-        self.assertFalse(self.map.contains_key("d"))
-        self.assertTrue(self.map.is_empty())
 
     def test_update(self):
         """Test update method."""
@@ -433,7 +366,7 @@ class TestKotMutableMapTypeResets(unittest.TestCase):
         m.put("x", "string")
         self.assertEqual(m.get("x"), "string")
 
-    def test_type_reset_on_remove_all(self):
+    def test_type_reset_on_remove(self):
         """Test type reset when all elements are removed."""
         m = KotMutableMap({"a": 1, "b": 2})
         m.remove("a")
@@ -501,7 +434,6 @@ class TestKotMutableMapEdgeCases(unittest.TestCase):
         # Remove from empty
         self.assertIsNone(m.remove("any"))
         self.assertFalse(m.remove_value("any", 1))
-        self.assertFalse(m.remove_all(lambda k, v: True))
         
         # Clear empty
         m.clear()  # Should not raise
