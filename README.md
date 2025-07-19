@@ -12,6 +12,7 @@ pip install kotcollections
 ## Features
 
 - Complete implementation of all Kotlin List methods using Python's snake_case naming convention
+- Pythonic `_none` aliases for all `_null` methods (e.g., both `first_or_null()` and `first_or_none()` are available)
 - Provides both read-only `KotList` and mutable `KotMutableList`
 - Full type safety with type hints
 - Runtime type checking to ensure single element type (similar to Kotlin's generic type system)
@@ -78,6 +79,33 @@ This type safety implementation provides similar guarantees to Kotlin's generic 
 
 The main difference is that Kotlin performs compile-time type checking, while KotList performs runtime type checking.
 
+## Pythonic Aliases
+
+To provide a more Pythonic API, all methods ending with `_null` have corresponding `_none` aliases:
+
+```python
+# All these _null methods have _none aliases
+lst = KotList([1, 2, None, 3, None])
+
+# Access methods
+print(lst.get_or_null(10))        # None
+print(lst.get_or_none(10))        # None (same result)
+print(lst.first_or_none())        # 1
+print(lst.last_or_none())         # None
+
+# Transformation methods  
+result = lst.map_not_none(lambda x: x * 2 if x else None)  # [2, 4, 6]
+
+# Filtering
+non_empty = lst.filter_not_none()  # KotList([1, 2, 3])
+
+# Aggregation
+print(lst.max_or_none())          # 3
+print(lst.min_or_none())          # 1
+```
+
+Both naming conventions are fully supported and can be used interchangeably based on your preference.
+
 ## Basic Usage
 
 ```python
@@ -92,14 +120,18 @@ mutable_lst = KotMutableList([1, 2, 3, 4, 5])
 
 ## Kotlin to Python Naming Convention
 
-| Kotlin            | Python              |
-|-------------------|---------------------|
-| `getOrNull()`     | `get_or_null()`     |
-| `firstOrNull()`   | `first_or_null()`   |
-| `mapIndexed()`    | `map_indexed()`     |
-| `filterNotNull()` | `filter_not_null()` |
-| `associateBy()`   | `associate_by()`    |
-| `joinToString()`  | `join_to_string()`  |
+All Kotlin methods are available with Python's snake_case naming convention. Additionally, all methods ending with `_null` have Pythonic `_none` aliases:
+
+| Kotlin            | Python (Primary)    | Python (Alias)      |
+|-------------------|---------------------|---------------------|
+| `getOrNull()`     | `get_or_null()`     | `get_or_none()`     |
+| `firstOrNull()`   | `first_or_null()`   | `first_or_none()`   |
+| `mapIndexed()`    | `map_indexed()`     | -                   |
+| `filterNotNull()` | `filter_not_null()` | `filter_not_none()` |
+| `associateBy()`   | `associate_by()`    | -                   |
+| `joinToString()`  | `join_to_string()`  | -                   |
+
+Note: Both naming styles (`_null` and `_none`) can be used interchangeably based on your preference.
 
 ## Methods and Examples
 
@@ -144,14 +176,18 @@ print(lst.get(1))  # 20
 print(lst[1])  # 20 (same behavior)
 ```
 
-#### get_or_null(index)
+#### get_or_null(index) / get_or_none(index)
 
-Gets the element at the specified index (returns None if out of range).
+Gets the element at the specified index (returns None if out of range). Both `get_or_null()` and `get_or_none()` can be used.
 
 ```python
 lst = KotList([10, 20, 30])
 print(lst.get_or_null(1))  # 20
 print(lst.get_or_null(10))  # None
+
+# Using the Pythonic alias
+print(lst.get_or_none(1))  # 20 (same as get_or_null)
+print(lst.get_or_none(10))  # None
 ```
 
 #### get_or_else(index, default_value)
@@ -173,16 +209,19 @@ print(lst.first())  # 10
 print(lst.last())  # 30
 ```
 
-#### first_or_null() / last_or_null()
+#### first_or_null() / first_or_none() / last_or_null() / last_or_none()
 
-Gets the first/last element (returns None if empty).
+Gets the first/last element (returns None if empty). Both `_null` and `_none` variants are available.
 
 ```python
 lst = KotList([10, 20, 30])
 print(lst.first_or_null())  # 10
+print(lst.last_or_null())  # 30
 
 empty = KotList()
 print(empty.first_or_null())  # None
+print(empty.first_or_none())  # None (Pythonic alias)
+print(empty.last_or_none())  # None (Pythonic alias)
 ```
 
 ### Search Methods
@@ -260,9 +299,9 @@ indexed = lst.map_indexed(lambda i, x: f"{i}:{x}")
 print(indexed.to_list())  # ['0:a', '1:b', '2:c']
 ```
 
-#### map_not_null(transform)
+#### map_not_null(transform) / map_not_none(transform)
 
-Creates a new list containing only non-None transformation results.
+Creates a new list containing only non-None transformation results. Both `map_not_null()` and `map_not_none()` can be used.
 
 ```python
 lst = KotList([1, 2, 3, 4])
@@ -342,14 +381,18 @@ odds = lst.filter_not(lambda x: x % 2 == 0)
 print(odds.to_list())  # [1, 3, 5]
 ```
 
-#### filter_not_null()
+#### filter_not_null() / filter_not_none()
 
-Creates a new list containing only non-None elements.
+Creates a new list containing only non-None elements. Both `filter_not_null()` and `filter_not_none()` can be used.
 
 ```python
 lst = KotList([1, None, 2, None, 3])
 non_nulls = lst.filter_not_null()
 print(non_nulls.to_list())  # [1, 2, 3]
+
+# Using the Pythonic alias
+non_nones = lst.filter_not_none()
+print(non_nones.to_list())  # [1, 2, 3]
 ```
 
 #### filter_is_instance(klass)
@@ -427,9 +470,9 @@ print(lst.sum_of(lambda x: x))  # 15
 print(lst.sum_of(lambda x: x * 2))  # 30
 ```
 
-#### max_or_null() / min_or_null()
+#### max_or_null() / max_or_none() / min_or_null() / min_or_none()
 
-Returns the maximum/minimum value (None if empty).
+Returns the maximum/minimum value (None if empty). Both `_null` and `_none` variants are available.
 
 ```python
 lst = KotList([3, 1, 4, 1, 5])
@@ -437,9 +480,9 @@ print(lst.max_or_null())  # 5
 print(lst.min_or_null())  # 1
 ```
 
-#### max_by_or_null(selector) / min_by_or_null(selector)
+#### max_by_or_null(selector) / max_by_or_none(selector) / min_by_or_null(selector) / min_by_or_none(selector)
 
-Returns the element with the maximum/minimum selector result.
+Returns the element with the maximum/minimum selector result. Both `_null` and `_none` variants are available.
 
 ```python
 lst = KotList(['a', 'bbb', 'cc'])

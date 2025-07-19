@@ -76,6 +76,13 @@ class TestKotListAccess(unittest.TestCase):
         self.assertEqual(lst.get_or_null(1), 20)
         self.assertIsNone(lst.get_or_null(-1))
         self.assertIsNone(lst.get_or_null(3))
+        
+    def test_get_or_none(self):
+        lst = KotList([10, 20, 30])
+        # Verify alias returns same result as get_or_null
+        self.assertEqual(lst.get_or_none(1), lst.get_or_null(1))
+        self.assertIsNone(lst.get_or_none(-1))
+        self.assertIsNone(lst.get_or_none(3))
 
     def test_get_or_else(self):
         lst = KotList([10, 20, 30])
@@ -104,11 +111,26 @@ class TestKotListAccess(unittest.TestCase):
 
         empty_lst = KotList()
         self.assertIsNone(empty_lst.first_or_null())
+        
+    def test_first_or_none(self):
+        lst = KotList([10, 20, 30])
+        # Verify alias returns same result as first_or_null
+        self.assertEqual(lst.first_or_none(), lst.first_or_null())
+
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.first_or_none())
 
     def test_first_or_null_predicate(self):
         lst = KotList([1, 2, 3, 4, 5])
         self.assertEqual(lst.first_or_null_predicate(lambda x: x > 3), 4)
         self.assertIsNone(lst.first_or_null_predicate(lambda x: x > 10))
+
+    def test_first_or_none_predicate(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        # Verify alias returns same result as first_or_null_predicate
+        self.assertEqual(lst.first_or_none_predicate(lambda x: x > 3), lst.first_or_null_predicate(lambda x: x > 3))
+        self.assertEqual(lst.first_or_none_predicate(lambda x: x > 3), 4)
+        self.assertIsNone(lst.first_or_none_predicate(lambda x: x > 10))
 
     def test_last(self):
         lst = KotList([10, 20, 30])
@@ -132,10 +154,26 @@ class TestKotListAccess(unittest.TestCase):
         empty_lst = KotList()
         self.assertIsNone(empty_lst.last_or_null())
 
+    def test_last_or_none(self):
+        lst = KotList([10, 20, 30])
+        # Verify alias returns same result as last_or_null
+        self.assertEqual(lst.last_or_none(), lst.last_or_null())
+        self.assertEqual(lst.last_or_none(), 30)
+
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.last_or_none())
+
     def test_last_or_null_predicate(self):
         lst = KotList([1, 2, 3, 4, 5])
         self.assertEqual(lst.last_or_null_predicate(lambda x: x < 4), 3)
         self.assertIsNone(lst.last_or_null_predicate(lambda x: x > 10))
+
+    def test_last_or_none_predicate(self):
+        lst = KotList([1, 2, 3, 4, 5])
+        # Verify alias returns same result as last_or_null_predicate
+        self.assertEqual(lst.last_or_none_predicate(lambda x: x < 4), lst.last_or_null_predicate(lambda x: x < 4))
+        self.assertEqual(lst.last_or_none_predicate(lambda x: x < 4), 3)
+        self.assertIsNone(lst.last_or_none_predicate(lambda x: x > 10))
 
     def test_element_at(self):
         lst = KotList([10, 20, 30])
@@ -153,6 +191,13 @@ class TestKotListAccess(unittest.TestCase):
         lst = KotList([10, 20, 30])
         self.assertEqual(lst.element_at_or_null(1), 20)
         self.assertIsNone(lst.element_at_or_null(3))
+
+    def test_element_at_or_none(self):
+        lst = KotList([10, 20, 30])
+        # Verify alias returns same result as element_at_or_null
+        self.assertEqual(lst.element_at_or_none(1), lst.element_at_or_null(1))
+        self.assertEqual(lst.element_at_or_none(1), 20)
+        self.assertIsNone(lst.element_at_or_none(3))
 
 
 class TestKotListSearch(unittest.TestCase):
@@ -231,6 +276,14 @@ class TestKotListTransform(unittest.TestCase):
         mapped = lst.map_not_null(lambda x: x * 2 if x % 2 == 0 else None)
         self.assertEqual(mapped.to_list(), [4, 8])
 
+    def test_map_not_none(self):
+        lst = KotList([1, 2, 3, 4])
+        # Verify alias returns same result as map_not_null
+        mapped_none = lst.map_not_none(lambda x: x * 2 if x % 2 == 0 else None)
+        mapped_null = lst.map_not_null(lambda x: x * 2 if x % 2 == 0 else None)
+        self.assertEqual(mapped_none.to_list(), mapped_null.to_list())
+        self.assertEqual(mapped_none.to_list(), [4, 8])
+
     def test_flat_map(self):
         lst = KotList([1, 2, 3])
         flat_mapped = lst.flat_map(lambda x: [x, x * 2])
@@ -285,6 +338,14 @@ class TestKotListFilter(unittest.TestCase):
         filtered = lst.filter_not_null()
         self.assertEqual(filtered.to_list(), [1, 2, 3, 4, 5])
 
+    def test_filter_not_none(self):
+        # Verify alias returns same result as filter_not_null
+        lst = KotList([1, 2, 3, 4, 5])
+        filtered_none = lst.filter_not_none()
+        filtered_null = lst.filter_not_null()
+        self.assertEqual(filtered_none.to_list(), filtered_null.to_list())
+        self.assertEqual(filtered_none.to_list(), [1, 2, 3, 4, 5])
+
 
     def test_partition(self):
         lst = KotList([1, 2, 3, 4, 5])
@@ -336,12 +397,30 @@ class TestKotListAggregation(unittest.TestCase):
         empty_lst = KotList()
         self.assertIsNone(empty_lst.max_or_null())
 
+    def test_max_or_none(self):
+        lst = KotList([3, 1, 4, 1, 5])
+        # Verify alias returns same result as max_or_null
+        self.assertEqual(lst.max_or_none(), lst.max_or_null())
+        self.assertEqual(lst.max_or_none(), 5)
+
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.max_or_none())
+
     def test_min_or_null(self):
         lst = KotList([3, 1, 4, 1, 5])
         self.assertEqual(lst.min_or_null(), 1)
 
         empty_lst = KotList()
         self.assertIsNone(empty_lst.min_or_null())
+
+    def test_min_or_none(self):
+        lst = KotList([3, 1, 4, 1, 5])
+        # Verify alias returns same result as min_or_null
+        self.assertEqual(lst.min_or_none(), lst.min_or_null())
+        self.assertEqual(lst.min_or_none(), 1)
+
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.min_or_none())
 
     def test_max_by_or_null(self):
         lst = KotList(['a', 'bbb', 'cc'])
@@ -350,12 +429,30 @@ class TestKotListAggregation(unittest.TestCase):
         empty_lst = KotList()
         self.assertIsNone(empty_lst.max_by_or_null(lambda x: x))
 
+    def test_max_by_or_none(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        # Verify alias returns same result as max_by_or_null
+        self.assertEqual(lst.max_by_or_none(lambda x: len(x)), lst.max_by_or_null(lambda x: len(x)))
+        self.assertEqual(lst.max_by_or_none(lambda x: len(x)), 'bbb')
+
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.max_by_or_none(lambda x: x))
+
     def test_min_by_or_null(self):
         lst = KotList(['a', 'bbb', 'cc'])
         self.assertEqual(lst.min_by_or_null(lambda x: len(x)), 'a')
 
         empty_lst = KotList()
         self.assertIsNone(empty_lst.min_by_or_null(lambda x: x))
+
+    def test_min_by_or_none(self):
+        lst = KotList(['a', 'bbb', 'cc'])
+        # Verify alias returns same result as min_by_or_null
+        self.assertEqual(lst.min_by_or_none(lambda x: len(x)), lst.min_by_or_null(lambda x: len(x)))
+        self.assertEqual(lst.min_by_or_none(lambda x: len(x)), 'a')
+
+        empty_lst = KotList()
+        self.assertIsNone(empty_lst.min_by_or_none(lambda x: x))
 
     def test_average(self):
         lst = KotList([1, 2, 3, 4, 5])

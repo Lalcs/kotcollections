@@ -96,6 +96,10 @@ class KotList(Generic[T]):
     def get_or_null(self, index: int) -> Optional[T]:
         return self._elements[index] if 0 <= index < self.size else None
     
+    def get_or_none(self, index: int) -> Optional[T]:
+        """Alias for get_or_null() - more Pythonic naming."""
+        return self.get_or_null(index)
+    
     def get_or_else(self, index: int, default_value: Callable[[int], T]) -> T:
         return self._elements[index] if 0 <= index < self.size else default_value(index)
     
@@ -113,11 +117,19 @@ class KotList(Generic[T]):
     def first_or_null(self) -> Optional[T]:
         return self._elements[0] if self.is_not_empty() else None
     
+    def first_or_none(self) -> Optional[T]:
+        """Alias for first_or_null() - more Pythonic naming."""
+        return self.first_or_null()
+    
     def first_or_null_predicate(self, predicate: Callable[[T], bool]) -> Optional[T]:
         for element in self._elements:
             if predicate(element):
                 return element
         return None
+    
+    def first_or_none_predicate(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Alias for first_or_null_predicate() - more Pythonic naming."""
+        return self.first_or_null_predicate(predicate)
     
     def last(self) -> T:
         if self.is_empty():
@@ -133,11 +145,19 @@ class KotList(Generic[T]):
     def last_or_null(self) -> Optional[T]:
         return self._elements[-1] if self.is_not_empty() else None
     
+    def last_or_none(self) -> Optional[T]:
+        """Alias for last_or_null() - more Pythonic naming."""
+        return self.last_or_null()
+    
     def last_or_null_predicate(self, predicate: Callable[[T], bool]) -> Optional[T]:
         for element in reversed(self._elements):
             if predicate(element):
                 return element
         return None
+    
+    def last_or_none_predicate(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Alias for last_or_null_predicate() - more Pythonic naming."""
+        return self.last_or_null_predicate(predicate)
     
     def element_at(self, index: int) -> T:
         return self.get(index)
@@ -147,6 +167,10 @@ class KotList(Generic[T]):
     
     def element_at_or_null(self, index: int) -> Optional[T]:
         return self.get_or_null(index)
+    
+    def element_at_or_none(self, index: int) -> Optional[T]:
+        """Alias for element_at_or_null() - more Pythonic naming."""
+        return self.element_at_or_null(index)
     
     def contains(self, element: T) -> bool:
         return element in self._elements
@@ -212,6 +236,10 @@ class KotList(Generic[T]):
                 result.append(transformed)
         return KotList(result)
     
+    def map_not_none(self, transform: Callable[[T], Optional[R]]) -> 'KotList[R]':
+        """Alias for map_not_null() - more Pythonic naming."""
+        return self.map_not_null(transform)
+    
     def flat_map(self, transform: Callable[[T], Iterable[R]]) -> 'KotList[R]':
         result = []
         for element in self._elements:
@@ -255,6 +283,10 @@ class KotList(Generic[T]):
     def filter_not_null(self) -> 'KotList[T]':
         return KotList([element for element in self._elements if element is not None])
     
+    def filter_not_none(self) -> 'KotList[T]':
+        """Alias for filter_not_null() - more Pythonic naming."""
+        return self.filter_not_null()
+    
     def filter_is_instance(self, klass: type) -> 'KotList[Any]':
         return KotList([element for element in self._elements if isinstance(element, klass)])
     
@@ -292,18 +324,34 @@ class KotList(Generic[T]):
     def max_or_null(self) -> Optional[T]:
         return max(self._elements) if self.is_not_empty() else None
     
+    def max_or_none(self) -> Optional[T]:
+        """Alias for max_or_null() - more Pythonic naming."""
+        return self.max_or_null()
+    
     def min_or_null(self) -> Optional[T]:
         return min(self._elements) if self.is_not_empty() else None
+    
+    def min_or_none(self) -> Optional[T]:
+        """Alias for min_or_null() - more Pythonic naming."""
+        return self.min_or_null()
     
     def max_by_or_null(self, selector: Callable[[T], Any]) -> Optional[T]:
         if self.is_empty():
             return None
         return max(self._elements, key=selector)
     
+    def max_by_or_none(self, selector: Callable[[T], Any]) -> Optional[T]:
+        """Alias for max_by_or_null() - more Pythonic naming."""
+        return self.max_by_or_null(selector)
+    
     def min_by_or_null(self, selector: Callable[[T], Any]) -> Optional[T]:
         if self.is_empty():
             return None
         return min(self._elements, key=selector)
+    
+    def min_by_or_none(self, selector: Callable[[T], Any]) -> Optional[T]:
+        """Alias for min_by_or_null() - more Pythonic naming."""
+        return self.min_by_or_null(selector)
     
     def average(self) -> float:
         if self.is_empty():
