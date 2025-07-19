@@ -537,5 +537,148 @@ class TestKotMapEdgeCases(unittest.TestCase):
         self.assertEqual(m.min_by(lambda k, v: v), ("only", 42))
 
 
+class TestKotMapNewMethods(unittest.TestCase):
+    """Test newly added KotMap methods for Kotlin compatibility."""
+
+    def test_get_value(self):
+        """Test getValue() method that throws exception for missing keys."""
+        m = KotMap({"a": 1, "b": 2, "c": 3})
+        
+        # Test getting existing values
+        self.assertEqual(m.get_value("a"), 1)
+        self.assertEqual(m.get_value("b"), 2)
+        self.assertEqual(m.get_value("c"), 3)
+        
+        # Test exception for missing key
+        with self.assertRaises(KeyError) as context:
+            m.get_value("missing")
+        self.assertIn("missing", str(context.exception))
+
+    def test_plus_method(self):
+        """Test plus() method and + operator."""
+        m1 = KotMap({"a": 1, "b": 2})
+        m2 = KotMap({"c": 3, "d": 4})
+        
+        # Test plus with another KotMap
+        m3 = m1.plus(m2)
+        self.assertEqual(m3.size, 4)
+        self.assertEqual(m3.get("a"), 1)
+        self.assertEqual(m3.get("b"), 2)
+        self.assertEqual(m3.get("c"), 3)
+        self.assertEqual(m3.get("d"), 4)
+        
+        # Test that original maps are unchanged
+        self.assertEqual(m1.size, 2)
+        self.assertEqual(m2.size, 2)
+        
+        # Test plus with dict
+        m4 = m1.plus({"e": 5, "f": 6})
+        self.assertEqual(m4.size, 4)
+        self.assertEqual(m4.get("e"), 5)
+        self.assertEqual(m4.get("f"), 6)
+        
+        # Test plus with tuple (single pair)
+        m5 = m1.plus(("g", 7))
+        self.assertEqual(m5.size, 3)
+        self.assertEqual(m5.get("g"), 7)
+        
+        # Test overwriting existing keys
+        m6 = m1.plus({"a": 10, "new": 20})
+        self.assertEqual(m6.get("a"), 10)  # Should be overwritten
+        self.assertEqual(m6.get("new"), 20)
+        
+        # Test + operator
+        m7 = m1 + m2
+        self.assertEqual(m7.size, 4)
+        m8 = m1 + ("h", 8)
+        self.assertEqual(m8.get("h"), 8)
+
+    def test_minus_method(self):
+        """Test minus() method and - operator."""
+        m = KotMap({"a": 1, "b": 2, "c": 3, "d": 4})
+        
+        # Test minus with single key
+        m1 = m.minus("a")
+        self.assertEqual(m1.size, 3)
+        self.assertFalse(m1.contains_key("a"))
+        self.assertTrue(m1.contains_key("b"))
+        
+        # Test minus with list of keys
+        m2 = m.minus(["a", "c"])
+        self.assertEqual(m2.size, 2)
+        self.assertFalse(m2.contains_key("a"))
+        self.assertFalse(m2.contains_key("c"))
+        self.assertTrue(m2.contains_key("b"))
+        self.assertTrue(m2.contains_key("d"))
+        
+        # Test minus with set of keys
+        m3 = m.minus({"b", "d"})
+        self.assertEqual(m3.size, 2)
+        self.assertTrue(m3.contains_key("a"))
+        self.assertTrue(m3.contains_key("c"))
+        
+        # Test minus with non-existent key
+        m4 = m.minus("non-existent")
+        self.assertEqual(m4.size, 4)  # Should remain unchanged
+        
+        # Test that original map is unchanged
+        self.assertEqual(m.size, 4)
+        
+        # Test - operator
+        m5 = m - "a"
+        self.assertEqual(m5.size, 3)
+        m6 = m - ["a", "b"]
+        self.assertEqual(m6.size, 2)
+
+    def test_with_default(self):
+        """Test withDefault() method and KotMapWithDefault class."""
+        from kotcollections import KotMapWithDefault
+        
+        m = KotMap({"a": 1, "b": 2})
+        
+        # Create a map with default value function
+        m_with_default = m.with_default(lambda k: len(k))
+        
+        # Test that it's an instance of KotMapWithDefault
+        self.assertIsInstance(m_with_default, KotMapWithDefault)
+        
+        # Test getting existing values
+        self.assertEqual(m_with_default.get("a"), 1)
+        self.assertEqual(m_with_default.get("b"), 2)
+        
+        # Test getting non-existent values (should use default function)
+        self.assertEqual(m_with_default.get("xxx"), 3)  # len("xxx") = 3
+        self.assertEqual(m_with_default.get("hello"), 5)  # len("hello") = 5
+        
+        # Test with [] operator
+        self.assertEqual(m_with_default["a"], 1)
+        self.assertEqual(m_with_default["missing"], 7)  # len("missing") = 7
+        
+        # Test getValue() - should not throw exception
+        self.assertEqual(m_with_default.get_value("new"), 3)  # len("new") = 3
+        
+        # Test that original map is unchanged
+        self.assertIsNone(m.get("xxx"))
+        
+        # Test withDefault with numeric default
+        m_numeric = KotMap({"x": 10, "y": 20})
+        m_with_numeric_default = m_numeric.with_default(lambda k: 0)
+        self.assertEqual(m_with_numeric_default.get("z"), 0)
+        
+        # Test withDefault preserves type safety
+        # (The default function should return the correct type)
+        m_str = KotMap({"key1": "value1"})
+        m_str_default = m_str.with_default(lambda k: f"default_{k}")
+        self.assertEqual(m_str_default.get("key2"), "default_key2")
+        
+        # Test get_or_default - should always use the map's default function
+        self.assertEqual(m_str_default.get_or_default("key3", "ignored"), "default_key3")
+        self.assertEqual(m_str_default.get_or_default("key1", "ignored"), "value1")
+        
+        # Test get_or_else - should always use the map's default function, not the provided one
+        self.assertEqual(m_str_default.get_or_else("key4", lambda: "should_not_be_used"), "default_key4")
+        self.assertEqual(m_str_default.get_or_else("key1", lambda: "should_not_be_used"), "value1")
+
+
 if __name__ == '__main__':
     unittest.main()

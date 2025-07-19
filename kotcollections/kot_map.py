@@ -114,6 +114,12 @@ class KotMap(Generic[K, V]):
         """Pythonic alias for get_or_null()."""
         return self.get_or_null(key)
     
+    def get_value(self, key: K) -> V:
+        """Returns the value for the given key or throws an exception if the key is missing in the map."""
+        if key not in self._elements:
+            raise KeyError(f"Key {key} is missing in the map.")
+        return self._elements[key]
+    
     # Collection views
     
     @property
@@ -289,6 +295,38 @@ class KotMap(Generic[K, V]):
         
         return prefix + separator.join(items) + postfix
     
+    # Operator methods
+    
+    def plus(self, other: 'KotMap[K, V]' | Dict[K, V] | Tuple[K, V]) -> 'KotMap[K, V]':
+        """Returns a map containing all entries from this map and the given map/pair.
+        
+        If a key is present in both maps, the value from the other map will be used.
+        """
+        new_elements = dict(self._elements)
+        
+        if isinstance(other, tuple):
+            key, value = other
+            new_elements[key] = value
+        elif isinstance(other, KotMap):
+            new_elements.update(other._elements)
+        else:  # Dict
+            new_elements.update(other)
+        
+        return KotMap(new_elements)
+    
+    def minus(self, key: K | List[K] | Set[K]) -> 'KotMap[K, V]':
+        """Returns a map containing all entries from this map except those whose keys are in the given collection."""
+        if isinstance(key, (list, set)):
+            new_elements = {k: v for k, v in self._elements.items() if k not in key}
+        else:
+            new_elements = {k: v for k, v in self._elements.items() if k != key}
+        
+        return KotMap(new_elements)
+    
+    def with_default(self, default_value: Callable[[K], V]) -> 'KotMapWithDefault[K, V]':
+        """Returns a wrapper of this map having the implicit default value provided by the specified function."""
+        return KotMapWithDefault(self, default_value)
+    
     # Python special methods
     
     def __len__(self) -> int:
@@ -319,6 +357,14 @@ class KotMap(Generic[K, V]):
             return False
         return self._elements == other._elements
     
+    def __add__(self, other: 'KotMap[K, V]' | Dict[K, V] | Tuple[K, V]) -> 'KotMap[K, V]':
+        """Implement + operator for maps."""
+        return self.plus(other)
+    
+    def __sub__(self, key: K | List[K] | Set[K]) -> 'KotMap[K, V]':
+        """Implement - operator for maps."""
+        return self.minus(key)
+    
     def __hash__(self) -> int:
         """Return hash of the map."""
         # Since KotMap is immutable, we can cache the hash
@@ -326,3 +372,52 @@ class KotMap(Generic[K, V]):
             items = tuple(sorted(self._elements.items()))
             self._cached_hash = hash(items)
         return self._cached_hash
+
+
+class KotMapWithDefault(KotMap[K, V]):
+    """A wrapper class that provides a default value for missing keys.
+    
+    This class wraps a KotMap and provides a default value function that
+    is called when a key is not found in the map.
+    """
+    
+    def __init__(self, map: KotMap[K, V], default_value: Callable[[K], V]):
+        """Initialize with a map and a default value function.
+        
+        Args:
+            map: The underlying KotMap
+            default_value: Function that provides default values for missing keys
+        """
+        # Copy the elements from the original map
+        super().__init__(map._elements)
+        self._default_value_function = default_value
+    
+    def get(self, key: K) -> V:
+        """Returns the value corresponding to the given key, or the default value if the key is not present."""
+        if key in self._elements:
+            return self._elements[key]
+        return self._default_value_function(key)
+    
+    def get_or_default(self, key: K, default_value: V) -> V:
+        """Returns the value corresponding to the given key, or default_value if such a key is not present."""
+        # This overrides the parent method to use the map's default if no explicit default is needed
+        return self.get(key)
+    
+    def get_or_else(self, key: K, default_value: Callable[[], V]) -> V:
+        """Returns the value for the given key. If the key is not found, calls the defaultValue function."""
+        if key in self._elements:
+            return self._elements[key]
+        # Use the map's default value function, not the provided one
+        return self._default_value_function(key)
+    
+    def get_value(self, key: K) -> V:
+        """Returns the value for the given key, using the default if the key is missing."""
+        return self.get(key)
+    
+    def __getitem__(self, key: K) -> V:
+        """Get value by key using [] operator, with default value support."""
+        return self.get(key)
+    
+    def __repr__(self) -> str:
+        """Return string representation of the map with default."""
+        return f"KotMapWithDefault({dict(self._elements)}, default_function)"
