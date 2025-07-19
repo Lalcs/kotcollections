@@ -355,6 +355,72 @@ class TestKotListSearch(unittest.TestCase):
         # Empty list
         self.assertEqual(empty.binary_search(10, lambda a, b: a - b), -1)
 
+    def test_binary_search_by(self):
+        # Test with objects sorted by a specific property
+        class Person:
+            def __init__(self, name, age):
+                self.name = name
+                self.age = age
+        
+        people = KotList([
+            Person("Alice", 25),
+            Person("Bob", 30),
+            Person("Charlie", 35),
+            Person("David", 40)
+        ])
+        
+        # Search by age
+        index = people.binary_search_by(30, lambda p: p.age)
+        self.assertEqual(index, 1)
+        self.assertEqual(people[index].name, "Bob")
+        
+        # Not found - returns negative insertion point
+        self.assertEqual(people.binary_search_by(32, lambda p: p.age), -3)
+        self.assertEqual(people.binary_search_by(20, lambda p: p.age), -1)
+        self.assertEqual(people.binary_search_by(50, lambda p: p.age), -5)
+        
+        # Test with custom comparator - list must be sorted by the key
+        lst_tuples = KotList([('w', 4), ('x', 3), ('y', 2), ('z', 1)])  # Sorted by first element
+        
+        def letter_comparator(a, b):
+            if a < b:
+                return -1
+            elif a > b:
+                return 1
+            return 0
+        
+        # Search by first element with custom comparator
+        index = lst_tuples.binary_search_by('x', lambda t: t[0], letter_comparator)
+        self.assertEqual(index, 1)
+        
+        # Not found with custom comparator
+        self.assertEqual(lst_tuples.binary_search_by('v', lambda t: t[0], letter_comparator), -1)
+        
+        # Test empty list
+        empty = KotList()
+        self.assertEqual(empty.binary_search_by(10, lambda x: x), -1)
+        
+        # Test single element
+        single = KotList([42])
+        self.assertEqual(single.binary_search_by(42, lambda x: x), 0)
+        self.assertEqual(single.binary_search_by(40, lambda x: x), -1)
+        
+        # Test custom comparator with complex search to cover all branches
+        sorted_nums = KotList([10, 20, 30, 40, 50, 60, 70, 80, 90])
+        
+        def custom_cmp(a, b):
+            # Custom comparator that ensures we hit all branches
+            if a < b:
+                return -1
+            elif a > b:
+                return 1
+            return 0
+        
+        # This should trigger the left = mid + 1 branch (line 243)
+        self.assertEqual(sorted_nums.binary_search_by(25, lambda x: x, custom_cmp), -3)
+        self.assertEqual(sorted_nums.binary_search_by(35, lambda x: x, custom_cmp), -4)
+        self.assertEqual(sorted_nums.binary_search_by(85, lambda x: x, custom_cmp), -9)
+
 
 class TestKotListTransform(unittest.TestCase):
     def test_map(self):
@@ -588,6 +654,22 @@ class TestKotListSorting(unittest.TestCase):
         lst = KotList(['bb', 'aaa', 'c'])
         sorted_lst = lst.sorted_by_descending(lambda x: len(x))
         self.assertEqual(sorted_lst.to_list(), ['aaa', 'bb', 'c'])
+
+    def test_sorted_with(self):
+        # Test with custom comparator - sort by absolute value
+        lst = KotList([-5, -1, 3, -2, 4])
+        sorted_lst = lst.sorted_with(lambda a, b: abs(a) - abs(b))
+        self.assertEqual(sorted_lst.to_list(), [-1, -2, 3, 4, -5])
+        
+        # Test with string length comparison
+        lst_str = KotList(['aaa', 'bb', 'cccc', 'd'])
+        sorted_str = lst_str.sorted_with(lambda a, b: len(a) - len(b))
+        self.assertEqual(sorted_str.to_list(), ['d', 'bb', 'aaa', 'cccc'])
+        
+        # Test reverse comparison
+        lst_int = KotList([3, 1, 4, 1, 5])
+        sorted_desc = lst_int.sorted_with(lambda a, b: b - a)
+        self.assertEqual(sorted_desc.to_list(), [5, 4, 3, 1, 1])
 
     def test_reversed(self):
         lst = KotList([1, 2, 3, 4, 5])

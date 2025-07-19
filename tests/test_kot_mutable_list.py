@@ -163,6 +163,74 @@ class TestKotMutableListModify(unittest.TestCase):
         self.assertTrue(lst.is_empty())
         self.assertEqual(lst.to_list(), [])
 
+    def test_remove_first(self):
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        removed = lst.remove_first()
+        self.assertEqual(removed, 1)
+        self.assertEqual(lst.to_list(), [2, 3, 4, 5])
+        
+        # Remove from single element list
+        single = KotMutableList([42])
+        self.assertEqual(single.remove_first(), 42)
+        self.assertTrue(single.is_empty())
+        
+        # Remove from empty list should raise error
+        empty = KotMutableList()
+        with self.assertRaises(IndexError):
+            empty.remove_first()
+
+    def test_remove_last(self):
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        removed = lst.remove_last()
+        self.assertEqual(removed, 5)
+        self.assertEqual(lst.to_list(), [1, 2, 3, 4])
+        
+        # Remove from single element list
+        single = KotMutableList([42])
+        self.assertEqual(single.remove_last(), 42)
+        self.assertTrue(single.is_empty())
+        
+        # Remove from empty list should raise error
+        empty = KotMutableList()
+        with self.assertRaises(IndexError):
+            empty.remove_last()
+
+    def test_remove_first_or_null(self):
+        lst = KotMutableList([1, 2, 3])
+        self.assertEqual(lst.remove_first_or_null(), 1)
+        self.assertEqual(lst.to_list(), [2, 3])
+        
+        # Remove from empty list should return None
+        empty = KotMutableList()
+        self.assertIsNone(empty.remove_first_or_null())
+        
+    def test_remove_first_or_none(self):
+        lst = KotMutableList([1, 2, 3])
+        # Verify alias returns same result as remove_first_or_null
+        self.assertEqual(lst.remove_first_or_none(), 1)
+        self.assertEqual(lst.to_list(), [2, 3])
+        
+        empty = KotMutableList()
+        self.assertIsNone(empty.remove_first_or_none())
+
+    def test_remove_last_or_null(self):
+        lst = KotMutableList([1, 2, 3])
+        self.assertEqual(lst.remove_last_or_null(), 3)
+        self.assertEqual(lst.to_list(), [1, 2])
+        
+        # Remove from empty list should return None
+        empty = KotMutableList()
+        self.assertIsNone(empty.remove_last_or_null())
+        
+    def test_remove_last_or_none(self):
+        lst = KotMutableList([1, 2, 3])
+        # Verify alias returns same result as remove_last_or_null
+        self.assertEqual(lst.remove_last_or_none(), 3)
+        self.assertEqual(lst.to_list(), [1, 2])
+        
+        empty = KotMutableList()
+        self.assertIsNone(empty.remove_last_or_none())
+
 
 class TestKotMutableListSorting(unittest.TestCase):
     def test_sort(self):
@@ -194,6 +262,22 @@ class TestKotMutableListSorting(unittest.TestCase):
         lst = KotMutableList(['bb', 'aaa', 'c'])
         lst.sort_by_descending(lambda x: len(x))
         self.assertEqual(lst.to_list(), ['aaa', 'bb', 'c'])
+
+    def test_sort_with(self):
+        # Test with custom comparator - sort by absolute value
+        lst = KotMutableList([-5, -1, 3, -2, 4])
+        lst.sort_with(lambda a, b: abs(a) - abs(b))
+        self.assertEqual(lst.to_list(), [-1, -2, 3, 4, -5])
+        
+        # Test with string length comparison
+        lst_str = KotMutableList(['aaa', 'bb', 'cccc', 'd'])
+        lst_str.sort_with(lambda a, b: len(a) - len(b))
+        self.assertEqual(lst_str.to_list(), ['d', 'bb', 'aaa', 'cccc'])
+        
+        # Test reverse comparison
+        lst_int = KotMutableList([3, 1, 4, 1, 5])
+        lst_int.sort_with(lambda a, b: b - a)
+        self.assertEqual(lst_int.to_list(), [5, 4, 3, 1, 1])
 
     def test_reverse(self):
         lst = KotMutableList([1, 2, 3, 4, 5])

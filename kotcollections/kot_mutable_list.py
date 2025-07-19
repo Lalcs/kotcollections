@@ -1,6 +1,7 @@
 from typing import TypeVar, Optional, Callable, Iterable, List
 from .kot_list import KotList
 import random
+from functools import cmp_to_key
 
 T = TypeVar('T')
 
@@ -73,6 +74,38 @@ class KotMutableList(KotList[T]):
         self._elements = [e for e in self._elements if e not in elements_set]
         return self.size < initial_size
     
+    def remove_first(self) -> T:
+        """Removes the first element from this mutable list."""
+        if self.is_empty():
+            raise IndexError("List is empty")
+        return self._elements.pop(0)
+    
+    def remove_last(self) -> T:
+        """Removes the last element from this mutable list."""
+        if self.is_empty():
+            raise IndexError("List is empty")
+        return self._elements.pop()
+    
+    def remove_first_or_null(self) -> Optional[T]:
+        """Removes the first element from this mutable list and returns it, or null if the list is empty."""
+        if self.is_empty():
+            return None
+        return self._elements.pop(0)
+    
+    def remove_first_or_none(self) -> Optional[T]:
+        """Alias for remove_first_or_null() - more Pythonic naming."""
+        return self.remove_first_or_null()
+    
+    def remove_last_or_null(self) -> Optional[T]:
+        """Removes the last element from this mutable list and returns it, or null if the list is empty."""
+        if self.is_empty():
+            return None
+        return self._elements.pop()
+    
+    def remove_last_or_none(self) -> Optional[T]:
+        """Alias for remove_last_or_null() - more Pythonic naming."""
+        return self.remove_last_or_null()
+    
     def retain_all(self, elements: Iterable[T]) -> bool:
         elements_set = set(elements)
         initial_size = self.size
@@ -93,6 +126,10 @@ class KotMutableList(KotList[T]):
     
     def sort_by_descending(self, selector: Callable[[T], any]) -> None:
         self._elements.sort(key=selector, reverse=True)
+    
+    def sort_with(self, comparator: Callable[[T, T], int]) -> None:
+        """Sorts elements in the list in-place according to the specified comparator."""
+        self._elements.sort(key=cmp_to_key(comparator))
     
     def reverse(self) -> None:
         self._elements.reverse()
