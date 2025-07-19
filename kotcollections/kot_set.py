@@ -3,7 +3,7 @@ KotSet: A Python implementation of Kotlin's Set interface with snake_case naming
 """
 
 from __future__ import annotations
-from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List
+from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List, Type
 from collections import defaultdict
 from functools import reduce
 import random
@@ -203,6 +203,23 @@ class KotSet(Generic[T]):
                 result.extend(transformed)
         return KotSet(result)
     
+    def map_indexed(self, transform: Callable[[int, T], R]) -> 'KotSet[R]':
+        """Returns a set containing the results of applying the given transform function to each element and its index."""
+        return KotSet(transform(index, element) for index, element in enumerate(self._elements))
+    
+    def flat_map_indexed(self, transform: Callable[[int, T], Set[R] | List[R] | 'KotSet[R]']) -> 'KotSet[R]':
+        """Returns a single set of all elements from results of transform function applied to each element and its index."""
+        result = []
+        for index, element in enumerate(self._elements):
+            transformed = transform(index, element)
+            if isinstance(transformed, KotSet):
+                result.extend(transformed._elements)
+            elif isinstance(transformed, set):
+                result.extend(transformed)
+            else:  # List
+                result.extend(transformed)
+        return KotSet(result)
+    
     # Filtering operations
     
     def filter(self, predicate: Callable[[T], bool]) -> 'KotSet[T]':
@@ -220,6 +237,10 @@ class KotSet(Generic[T]):
     def filter_not_none(self) -> 'KotSet[T]':
         """Pythonic alias for filter_not_null()."""
         return self.filter_not_null()
+    
+    def filter_is_instance(self, klass: Type[R]) -> 'KotSet[R]':
+        """Returns a set containing all elements that are instances of the specified class."""
+        return KotSet(element for element in self._elements if isinstance(element, klass))
     
     # Aggregation operations
     
@@ -327,6 +348,15 @@ class KotSet(Generic[T]):
             groups[key].append(element)
         return {key: KotSet(elements) for key, elements in groups.items()}
     
+    def group_by_to(self, key_selector: Callable[[T], R], value_transform: Callable[[T], Any]) -> dict[R, List[Any]]:
+        """Groups values returned by value_transform by the keys returned by key_selector."""
+        groups = defaultdict(list)
+        for element in self._elements:
+            key = key_selector(element)
+            value = value_transform(element)
+            groups[key].append(value)
+        return dict(groups)
+    
     def associate(self, transform: Callable[[T], Tuple[R, Any]]) -> dict[R, Any]:
         """Returns a Map containing key-value pairs provided by transform function."""
         return {key: value for key, value in (transform(element) for element in self._elements)}
@@ -338,6 +368,56 @@ class KotSet(Generic[T]):
     def associate_with(self, value_selector: Callable[[T], R]) -> dict[T, R]:
         """Returns a Map where keys are elements and values are produced by value_selector."""
         return {element: value_selector(element) for element in self._elements}
+    
+    # Additional convenience operations
+    
+    def find(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Returns the first element matching the given predicate, or null if not found.
+        
+        This is an alias for first_or_null_predicate() for Kotlin compatibility.
+        """
+        return self.first_or_null_predicate(predicate)
+    
+    def partition(self, predicate: Callable[[T], bool]) -> Tuple['KotSet[T]', 'KotSet[T]']:
+        """Splits the original set into pair of sets.
+        
+        The first set contains elements for which predicate yielded true,
+        while the second set contains elements for which predicate yielded false.
+        """
+        true_elements = []
+        false_elements = []
+        for element in self._elements:
+            if predicate(element):
+                true_elements.append(element)
+            else:
+                false_elements.append(element)
+        return KotSet(true_elements), KotSet(false_elements)
+    
+    def for_each(self, action: Callable[[T], None]) -> None:
+        """Performs the given action on each element."""
+        for element in self._elements:
+            action(element)
+    
+    def for_each_indexed(self, action: Callable[[int, T], None]) -> None:
+        """Performs the given action on each element, providing sequential index with the element."""
+        for index, element in enumerate(self._elements):
+            action(index, element)
+    
+    def with_index(self) -> Iterator[Tuple[int, T]]:
+        """Returns an Iterator of IndexedValue for each element of the original set."""
+        return enumerate(self._elements)
+    
+    def zip(self, other: Set[R] | List[R] | 'KotSet[R]') -> 'KotSet[Tuple[T, R]]':
+        """Returns a set of pairs built from the elements of this set and other collection with the same index."""
+        if isinstance(other, KotSet):
+            other = list(other._elements)
+        elif isinstance(other, set):
+            other = list(other)
+        return KotSet(zip(self._elements, other))
+    
+    def as_sequence(self) -> Iterator[T]:
+        """Creates a sequence instance that wraps the original set, allowing lazy evaluation."""
+        return iter(self._elements)
     
     # Set operations
     
@@ -359,6 +439,28 @@ class KotSet(Generic[T]):
             other = other._elements
         return KotSet(self._elements.difference(other))
     
+    # Operator-style set operations
+    
+    def plus(self, element: T) -> 'KotSet[T]':
+        """Returns a set containing all elements of the original set and the given element."""
+        result = self._elements.copy()
+        result.add(element)
+        return KotSet(result)
+    
+    def plus_collection(self, elements: Set[T] | List[T] | 'KotSet[T]') -> 'KotSet[T]':
+        """Returns a set containing all elements of the original set and the given collection."""
+        return self.union(elements if isinstance(elements, (set, KotSet)) else set(elements))
+    
+    def minus(self, element: T) -> 'KotSet[T]':
+        """Returns a set containing all elements of the original set except the given element."""
+        result = self._elements.copy()
+        result.discard(element)
+        return KotSet(result)
+    
+    def minus_collection(self, elements: Set[T] | List[T] | 'KotSet[T]') -> 'KotSet[T]':
+        """Returns a set containing all elements of the original set except those in the given collection."""
+        return self.subtract(elements)
+    
     # Conversion operations
     
     def to_list(self) -> List[T]:
@@ -373,6 +475,16 @@ class KotSet(Generic[T]):
         """Returns a sorted list of all elements."""
         return sorted(self._elements, key=key, reverse=reverse)
     
+    def to_mutable_set(self) -> 'KotMutableSet[T]':
+        """Returns a KotMutableSet containing all elements."""
+        from kotcollections.kot_mutable_set import KotMutableSet
+        return KotMutableSet(self._elements.copy())
+    
+    def to_mutable_list(self) -> 'KotMutableList[T]':
+        """Returns a KotMutableList containing all elements."""
+        from kotcollections.kot_mutable_list import KotMutableList
+        return KotMutableList(list(self._elements))
+    
     def join_to_string(
         self,
         separator: str = ", ",
@@ -384,7 +496,7 @@ class KotSet(Generic[T]):
     ) -> str:
         """Creates a string from all the elements separated using separator."""
         elements = list(self._elements)
-        if limit >= 0 and len(elements) > limit:
+        if 0 <= limit < len(elements):
             elements = elements[:limit]
             truncated_part = truncated
         else:

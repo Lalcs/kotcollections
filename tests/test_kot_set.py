@@ -642,3 +642,188 @@ class TestKotSetConversion(unittest.TestCase):
         s2 = KotSet(range(10))
         result = s2.join_to_string(limit=3, truncated=" and more...")
         self.assertTrue(" and more..." in result)
+
+
+class TestKotSetNewMethods(unittest.TestCase):
+    """Test newly added Kotlin-compatible methods."""
+    
+    def test_find(self):
+        """Test find method."""
+        s = KotSet([1, 2, 3, 4, 5])
+        # Find existing element
+        result = s.find(lambda x: x > 3)
+        self.assertIn(result, [4, 5])
+        # Find non-existing
+        result = s.find(lambda x: x > 10)
+        self.assertIsNone(result)
+    
+    def test_partition(self):
+        """Test partition method."""
+        s = KotSet([1, 2, 3, 4, 5])
+        evens, odds = s.partition(lambda x: x % 2 == 0)
+        self.assertEqual(evens.size, 2)
+        self.assertEqual(odds.size, 3)
+        self.assertTrue(2 in evens)
+        self.assertTrue(4 in evens)
+        self.assertTrue(1 in odds)
+        self.assertTrue(3 in odds)
+        self.assertTrue(5 in odds)
+    
+    def test_for_each(self):
+        """Test for_each method."""
+        s = KotSet([1, 2, 3])
+        result = []
+        s.for_each(lambda x: result.append(x * 2))
+        self.assertEqual(len(result), 3)
+        self.assertTrue(2 in result)
+        self.assertTrue(4 in result)
+        self.assertTrue(6 in result)
+    
+    def test_for_each_indexed(self):
+        """Test for_each_indexed method."""
+        s = KotSet(['a', 'b', 'c'])
+        result = []
+        s.for_each_indexed(lambda i, x: result.append(f"{i}:{x}"))
+        self.assertEqual(len(result), 3)
+        # Check that all elements are processed (order not guaranteed)
+        combined = ''.join(sorted(result))
+        self.assertIn('a', combined)
+        self.assertIn('b', combined)
+        self.assertIn('c', combined)
+    
+    def test_plus_minus(self):
+        """Test plus and minus methods."""
+        s = KotSet([1, 2, 3])
+        # Test plus
+        s2 = s.plus(4)
+        self.assertEqual(s2.size, 4)
+        self.assertTrue(4 in s2)
+        self.assertEqual(s.size, 3)  # Original unchanged
+        
+        # Test minus
+        s3 = s.minus(2)
+        self.assertEqual(s3.size, 2)
+        self.assertFalse(2 in s3)
+        self.assertEqual(s.size, 3)  # Original unchanged
+    
+    def test_plus_minus_collection(self):
+        """Test plus_collection and minus_collection methods."""
+        s = KotSet([1, 2, 3])
+        # Test plus_collection
+        s2 = s.plus_collection([4, 5])
+        self.assertEqual(s2.size, 5)
+        
+        # Test minus_collection
+        s3 = s.minus_collection([1, 3])
+        self.assertEqual(s3.size, 1)
+        self.assertTrue(2 in s3)
+    
+    def test_to_mutable_set(self):
+        """Test to_mutable_set conversion."""
+        s = KotSet([1, 2, 3])
+        ms = s.to_mutable_set()
+        self.assertEqual(ms.size, 3)
+        # Test mutation
+        ms.add(4)
+        self.assertEqual(ms.size, 4)
+        self.assertEqual(s.size, 3)  # Original unchanged
+    
+    def test_to_mutable_list(self):
+        """Test to_mutable_list conversion."""
+        s = KotSet([1, 2, 3])
+        ml = s.to_mutable_list()
+        self.assertEqual(len(ml), 3)
+        # Test mutation
+        ml.add(4)
+        self.assertEqual(len(ml), 4)
+        self.assertEqual(s.size, 3)  # Original unchanged
+    
+    def test_filter_is_instance(self):
+        """Test filter_is_instance method."""
+        # Test with integers (all same type, filter returns all)
+        s = KotSet([1, 2, 3, 4, 5])
+        ints = s.filter_is_instance(int)
+        self.assertEqual(ints.size, 5)
+        self.assertTrue(all(isinstance(x, int) for x in ints))
+        
+        # Test with different type filter (returns empty)
+        strs = s.filter_is_instance(str)
+        self.assertEqual(strs.size, 0)
+        
+        # Test with None values (Set removes duplicates)
+        s2 = KotSet([None])
+        nones = s2.filter_is_instance(type(None))
+        self.assertEqual(nones.size, 1)
+    
+    def test_map_indexed(self):
+        """Test map_indexed method."""
+        s = KotSet(['a', 'b', 'c'])
+        result = s.map_indexed(lambda i, x: f"{i}:{x}")
+        self.assertEqual(result.size, 3)
+        # All elements should be transformed
+        all_results = list(result)
+        self.assertTrue(any(':a' in r for r in all_results))
+        self.assertTrue(any(':b' in r for r in all_results))
+        self.assertTrue(any(':c' in r for r in all_results))
+    
+    def test_flat_map_indexed(self):
+        """Test flat_map_indexed method."""
+        s = KotSet([2, 3, 4])
+        result = s.flat_map_indexed(lambda i, x: [x] * i)
+        # Results will vary based on iteration order
+        self.assertGreater(result.size, 0)
+        
+        # Test with KotSet return
+        s2 = KotSet(['a', 'b'])
+        result2 = s2.flat_map_indexed(lambda i, x: KotSet([f"{x}{i}"]))
+        self.assertEqual(result2.size, 2)
+        
+        # Test with set return
+        result3 = s2.flat_map_indexed(lambda i, x: {f"{x}-{i}"})
+        self.assertEqual(result3.size, 2)
+    
+    def test_with_index(self):
+        """Test with_index method."""
+        s = KotSet(['a', 'b', 'c'])
+        indexed = list(s.with_index())
+        self.assertEqual(len(indexed), 3)
+        # Check all indices present
+        indices = [i for i, _ in indexed]
+        self.assertEqual(sorted(indices), [0, 1, 2])
+    
+    def test_zip(self):
+        """Test zip method."""
+        s1 = KotSet([1, 2, 3])
+        s2 = KotSet(['a', 'b', 'c'])
+        result = s1.zip(s2)
+        self.assertLessEqual(result.size, 3)
+        # Check that pairs are formed
+        for pair in result:
+            self.assertIsInstance(pair, tuple)
+            self.assertEqual(len(pair), 2)
+        
+        # Test with Python set
+        s3 = s1.zip({'x', 'y', 'z'})
+        self.assertLessEqual(s3.size, 3)
+    
+    def test_as_sequence(self):
+        """Test as_sequence method."""
+        s = KotSet([1, 2, 3])
+        seq = s.as_sequence()
+        # Should be an iterator
+        self.assertTrue(hasattr(seq, '__iter__'))
+        # Can iterate
+        values = list(seq)
+        self.assertEqual(len(values), 3)
+    
+    def test_group_by_to(self):
+        """Test group_by_to method."""
+        s = KotSet(['apple', 'apricot', 'banana', 'blueberry'])
+        result = s.group_by_to(
+            lambda x: x[0],  # Group by first letter
+            lambda x: len(x)  # Transform to length
+        )
+        self.assertIn('a', result)
+        self.assertIn('b', result)
+        self.assertEqual(len(result['a']), 2)
+        self.assertEqual(len(result['b']), 2)
