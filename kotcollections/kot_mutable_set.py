@@ -4,9 +4,13 @@ KotMutableSet: A Python implementation of Kotlin's MutableSet interface with sna
 
 from __future__ import annotations
 
-from typing import TypeVar, Set, List, Iterator, Optional, Callable
+from typing import TypeVar, Set, List, Iterator, Optional, Callable, TYPE_CHECKING
 
 from kotcollections.kot_set import KotSet
+
+if TYPE_CHECKING:
+    from kotcollections.kot_list import KotList
+    from kotcollections.kot_mutable_list import KotMutableList
 
 T = TypeVar('T')
 
@@ -39,7 +43,7 @@ class KotMutableSet(KotSet[T]):
         self._add_with_type_check(element)
         return True
 
-    def add_all(self, elements: Set[T] | List[T] | 'KotSet[T]') -> bool:
+    def add_all(self, elements: Set[T] | List[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> bool:
         """Adds all of the elements in the specified collection to this set.
         
         Returns:
@@ -47,6 +51,9 @@ class KotMutableSet(KotSet[T]):
         """
         if isinstance(elements, KotSet):
             elements = elements._elements
+        elif hasattr(elements, '_elements') and hasattr(elements, 'to_list'):
+            # It's a KotList or KotMutableList
+            elements = set(elements)
         elif isinstance(elements, list):
             elements = set(elements)
 
@@ -69,7 +76,7 @@ class KotMutableSet(KotSet[T]):
             return True
         return False
 
-    def remove_all(self, elements: Set[T] | List[T] | 'KotSet[T]') -> bool:
+    def remove_all(self, elements: Set[T] | List[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> bool:
         """Removes all of this set's elements that are also contained in the specified collection.
         
         Returns:
@@ -77,6 +84,9 @@ class KotMutableSet(KotSet[T]):
         """
         if isinstance(elements, KotSet):
             elements = elements._elements
+        elif hasattr(elements, '_elements') and hasattr(elements, 'to_list'):
+            # It's a KotList or KotMutableList
+            elements = set(elements)
         elif isinstance(elements, list):
             elements = set(elements)
 
@@ -86,7 +96,7 @@ class KotMutableSet(KotSet[T]):
             self._element_type = None
         return self.size < initial_size
 
-    def retain_all(self, elements: Set[T] | List[T] | 'KotSet[T]') -> bool:
+    def retain_all(self, elements: Set[T] | List[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> bool:
         """Retains only the elements in this set that are contained in the specified collection.
         
         Returns:
@@ -94,6 +104,9 @@ class KotMutableSet(KotSet[T]):
         """
         if isinstance(elements, KotSet):
             elements = elements._elements
+        elif hasattr(elements, '_elements') and hasattr(elements, 'to_list'):
+            # It's a KotList or KotMutableList
+            elements = set(elements)
         elif isinstance(elements, list):
             elements = set(elements)
 
@@ -142,43 +155,52 @@ class KotMutableSet(KotSet[T]):
 
     # Union/Intersection/Difference with mutation
 
-    def union_update(self, other: Set[T] | 'KotSet[T]') -> None:
+    def union_update(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> None:
         """Adds all elements from the other collection to this set."""
         if isinstance(other, KotSet):
             other = other._elements
+        elif hasattr(other, '_elements') and hasattr(other, 'to_list'):
+            # It's a KotList or KotMutableList
+            other = set(other)
         for element in other:
             if element not in self._elements:
                 self._add_with_type_check(element)
 
-    def intersect_update(self, other: Set[T] | 'KotSet[T]') -> None:
+    def intersect_update(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> None:
         """Retains only elements that are contained in the specified collection."""
         if isinstance(other, KotSet):
             other = other._elements
+        elif hasattr(other, '_elements') and hasattr(other, 'to_list'):
+            # It's a KotList or KotMutableList
+            other = set(other)
         self._elements.intersection_update(other)
         if self.is_empty():
             self._element_type = None
 
-    def subtract_update(self, other: Set[T] | 'KotSet[T]') -> None:
+    def subtract_update(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> None:
         """Removes all elements that are contained in the specified collection."""
         if isinstance(other, KotSet):
             other = other._elements
+        elif hasattr(other, '_elements') and hasattr(other, 'to_list'):
+            # It's a KotList or KotMutableList
+            other = set(other)
         self._elements.difference_update(other)
         if self.is_empty():
             self._element_type = None
 
     # Operator overloads for mutation
 
-    def __iadd__(self, other: Set[T] | 'KotSet[T]') -> 'KotMutableSet[T]':
+    def __iadd__(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotMutableSet[T]':
         """In-place union using += operator."""
         self.union_update(other)
         return self
 
-    def __isub__(self, other: Set[T] | 'KotSet[T]') -> 'KotMutableSet[T]':
+    def __isub__(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotMutableSet[T]':
         """In-place subtraction using -= operator."""
         self.subtract_update(other)
         return self
 
-    def __iand__(self, other: Set[T] | 'KotSet[T]') -> 'KotMutableSet[T]':
+    def __iand__(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotMutableSet[T]':
         """In-place intersection using &= operator."""
         self.intersect_update(other)
         return self

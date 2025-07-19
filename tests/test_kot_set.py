@@ -827,3 +827,144 @@ class TestKotSetNewMethods(unittest.TestCase):
         self.assertIn('b', result)
         self.assertEqual(len(result['a']), 2)
         self.assertEqual(len(result['b']), 2)
+
+
+class TestKotSetWithKotList(unittest.TestCase):
+    """Test KotSet accepting KotList and KotMutableList."""
+    
+    def test_init_from_kot_list(self):
+        """Test creating KotSet from KotList."""
+        from kotcollections.kot_list import KotList
+        
+        kot_list = KotList([1, 2, 2, 3, 3, 3])
+        s = KotSet(kot_list)
+        self.assertEqual(s.size, 3)  # Duplicates removed
+        self.assertTrue(1 in s)
+        self.assertTrue(2 in s)
+        self.assertTrue(3 in s)
+    
+    def test_init_from_kot_mutable_list(self):
+        """Test creating KotSet from KotMutableList."""
+        from kotcollections.kot_mutable_list import KotMutableList
+        
+        kot_mutable_list = KotMutableList([4, 5, 5, 6, 6, 6])
+        s = KotSet(kot_mutable_list)
+        self.assertEqual(s.size, 3)  # Duplicates removed
+        self.assertTrue(4 in s)
+        self.assertTrue(5 in s)
+        self.assertTrue(6 in s)
+    
+    def test_contains_all_with_kot_list(self):
+        """Test contains_all with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotSet([1, 2, 3, 4, 5])
+        kot_list = KotList([2, 3, 4])
+        self.assertTrue(s.contains_all(kot_list))
+        
+        kot_list2 = KotList([5, 6, 7])
+        self.assertFalse(s.contains_all(kot_list2))
+    
+    def test_flat_map_with_kot_list(self):
+        """Test flat_map returning KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotSet([1, 2, 3])
+        flat_mapped = s.flat_map(lambda x: KotList([x, x * 10]))
+        self.assertEqual(flat_mapped.size, 6)
+        for i in [1, 2, 3, 10, 20, 30]:
+            self.assertTrue(i in flat_mapped)
+    
+    def test_flat_map_with_kot_mutable_list(self):
+        """Test flat_map returning KotMutableList."""
+        from kotcollections.kot_mutable_list import KotMutableList
+        
+        s = KotSet([1, 2])
+        flat_mapped = s.flat_map(lambda x: KotMutableList([x, x + 10]))
+        self.assertEqual(flat_mapped.size, 4)
+        for i in [1, 2, 11, 12]:
+            self.assertTrue(i in flat_mapped)
+    
+    def test_flat_map_indexed_with_kot_list(self):
+        """Test flat_map_indexed returning KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotSet(['a', 'b'])
+        flat_mapped = s.flat_map_indexed(lambda i, x: KotList([f"{x}{i}"]))
+        self.assertEqual(flat_mapped.size, 2)
+    
+    def test_union_with_kot_list(self):
+        """Test union with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s1 = KotSet([1, 2, 3])
+        kot_list = KotList([3, 4, 5, 5])
+        result = s1.union(kot_list)
+        
+        self.assertEqual(result.size, 5)
+        for i in range(1, 6):
+            self.assertTrue(i in result)
+    
+    def test_intersect_with_kot_list(self):
+        """Test intersect with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s1 = KotSet([1, 2, 3, 4])
+        kot_list = KotList([3, 4, 5, 6])
+        result = s1.intersect(kot_list)
+        
+        self.assertEqual(result.size, 2)
+        self.assertTrue(3 in result)
+        self.assertTrue(4 in result)
+    
+    def test_subtract_with_kot_list(self):
+        """Test subtract with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s1 = KotSet([1, 2, 3, 4])
+        kot_list = KotList([3, 4, 5, 6])
+        result = s1.subtract(kot_list)
+        
+        self.assertEqual(result.size, 2)
+        self.assertTrue(1 in result)
+        self.assertTrue(2 in result)
+    
+    def test_plus_collection_with_kot_list(self):
+        """Test plus_collection with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotSet([1, 2, 3])
+        kot_list = KotList([4, 5])
+        result = s.plus_collection(kot_list)
+        
+        self.assertEqual(result.size, 5)
+        for i in range(1, 6):
+            self.assertTrue(i in result)
+    
+    def test_minus_collection_with_kot_list(self):
+        """Test minus_collection with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotSet([1, 2, 3, 4, 5])
+        kot_list = KotList([2, 4])
+        result = s.minus_collection(kot_list)
+        
+        self.assertEqual(result.size, 3)
+        self.assertTrue(1 in result)
+        self.assertTrue(3 in result)
+        self.assertTrue(5 in result)
+    
+    def test_zip_with_kot_list(self):
+        """Test zip with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotSet([1, 2, 3])
+        kot_list = KotList(['a', 'b', 'c', 'd'])
+        result = s.zip(kot_list)
+        
+        self.assertLessEqual(result.size, 3)
+        for pair in result:
+            self.assertIsInstance(pair, tuple)
+            self.assertEqual(len(pair), 2)
+            self.assertIsInstance(pair[0], int)
+            self.assertIsInstance(pair[1], str)

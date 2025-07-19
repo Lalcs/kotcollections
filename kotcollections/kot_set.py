@@ -3,10 +3,14 @@ KotSet: A Python implementation of Kotlin's Set interface with snake_case naming
 """
 
 from __future__ import annotations
-from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List, Type
+from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List, Type, TYPE_CHECKING
 from collections import defaultdict
 from functools import reduce
 import random
+
+if TYPE_CHECKING:
+    from kotcollections.kot_list import KotList
+    from kotcollections.kot_mutable_list import KotMutableList
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -19,17 +23,22 @@ class KotSet(Generic[T]):
     maintaining type safety and immutability.
     """
     
-    def __init__(self, elements: Optional[Set[T] | List[T] | Iterator[T]] = None):
+    def __init__(self, elements: Optional[Set[T] | List[T] | Iterator[T] | 'KotList[T]' | 'KotMutableList[T]'] = None):
         """Initialize a KotSet with optional elements.
         
         Args:
-            elements: Initial elements for the set (set, list, or iterator)
+            elements: Initial elements for the set (set, list, iterator, KotList, or KotMutableList)
         """
         self._elements: Set[T] = set()
         self._element_type: Optional[type] = None
         
         if elements is not None:
-            if isinstance(elements, set):
+            # Check for KotList/KotMutableList first to avoid circular imports
+            if hasattr(elements, '_elements') and hasattr(elements, 'to_list'):
+                # It's a KotList or KotMutableList
+                for element in elements:
+                    self._add_with_type_check(element)
+            elif isinstance(elements, set):
                 for element in elements:
                     self._add_with_type_check(element)
             elif isinstance(elements, list):
@@ -73,10 +82,13 @@ class KotSet(Generic[T]):
         """Returns true if the set contains the specified element."""
         return element in self._elements
     
-    def contains_all(self, elements: Set[T] | List[T] | 'KotSet[T]') -> bool:
+    def contains_all(self, elements: Set[T] | List[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> bool:
         """Returns true if the set contains all of the elements in the specified collection."""
         if isinstance(elements, KotSet):
             elements = elements._elements
+        elif hasattr(elements, '_elements') and hasattr(elements, 'to_list'):
+            # It's a KotList or KotMutableList
+            elements = set(elements)
         elif isinstance(elements, list):
             elements = set(elements)
         return elements.issubset(self._elements)
@@ -190,13 +202,16 @@ class KotSet(Generic[T]):
         """Pythonic alias for map_not_null()."""
         return self.map_not_null(transform)
     
-    def flat_map(self, transform: Callable[[T], Set[R] | List[R] | 'KotSet[R]']) -> 'KotSet[R]':
+    def flat_map(self, transform: Callable[[T], Set[R] | List[R] | 'KotSet[R]' | 'KotList[R]' | 'KotMutableList[R]']) -> 'KotSet[R]':
         """Returns a single set of all elements from results of transform function."""
         result = []
         for element in self._elements:
             transformed = transform(element)
             if isinstance(transformed, KotSet):
                 result.extend(transformed._elements)
+            elif hasattr(transformed, '_elements') and hasattr(transformed, 'to_list'):
+                # It's a KotList or KotMutableList
+                result.extend(transformed)
             elif isinstance(transformed, set):
                 result.extend(transformed)
             else:  # List
@@ -207,13 +222,16 @@ class KotSet(Generic[T]):
         """Returns a set containing the results of applying the given transform function to each element and its index."""
         return KotSet(transform(index, element) for index, element in enumerate(self._elements))
     
-    def flat_map_indexed(self, transform: Callable[[int, T], Set[R] | List[R] | 'KotSet[R]']) -> 'KotSet[R]':
+    def flat_map_indexed(self, transform: Callable[[int, T], Set[R] | List[R] | 'KotSet[R]' | 'KotList[R]' | 'KotMutableList[R]']) -> 'KotSet[R]':
         """Returns a single set of all elements from results of transform function applied to each element and its index."""
         result = []
         for index, element in enumerate(self._elements):
             transformed = transform(index, element)
             if isinstance(transformed, KotSet):
                 result.extend(transformed._elements)
+            elif hasattr(transformed, '_elements') and hasattr(transformed, 'to_list'):
+                # It's a KotList or KotMutableList
+                result.extend(transformed)
             elif isinstance(transformed, set):
                 result.extend(transformed)
             else:  # List
@@ -407,10 +425,13 @@ class KotSet(Generic[T]):
         """Returns an Iterator of IndexedValue for each element of the original set."""
         return enumerate(self._elements)
     
-    def zip(self, other: Set[R] | List[R] | 'KotSet[R]') -> 'KotSet[Tuple[T, R]]':
+    def zip(self, other: Set[R] | List[R] | 'KotSet[R]' | 'KotList[R]' | 'KotMutableList[R]') -> 'KotSet[Tuple[T, R]]':
         """Returns a set of pairs built from the elements of this set and other collection with the same index."""
         if isinstance(other, KotSet):
             other = list(other._elements)
+        elif hasattr(other, '_elements') and hasattr(other, 'to_list'):
+            # It's a KotList or KotMutableList
+            other = list(other)
         elif isinstance(other, set):
             other = list(other)
         return KotSet(zip(self._elements, other))
@@ -421,22 +442,31 @@ class KotSet(Generic[T]):
     
     # Set operations
     
-    def union(self, other: Set[T] | 'KotSet[T]') -> 'KotSet[T]':
+    def union(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotSet[T]':
         """Returns a set containing all distinct elements from both collections."""
         if isinstance(other, KotSet):
             other = other._elements
+        elif hasattr(other, '_elements') and hasattr(other, 'to_list'):
+            # It's a KotList or KotMutableList
+            other = set(other)
         return KotSet(self._elements.union(other))
     
-    def intersect(self, other: Set[T] | 'KotSet[T]') -> 'KotSet[T]':
+    def intersect(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotSet[T]':
         """Returns a set containing all elements that are contained by both collections."""
         if isinstance(other, KotSet):
             other = other._elements
+        elif hasattr(other, '_elements') and hasattr(other, 'to_list'):
+            # It's a KotList or KotMutableList
+            other = set(other)
         return KotSet(self._elements.intersection(other))
     
-    def subtract(self, other: Set[T] | 'KotSet[T]') -> 'KotSet[T]':
+    def subtract(self, other: Set[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotSet[T]':
         """Returns a set containing all elements that are not contained in the specified collection."""
         if isinstance(other, KotSet):
             other = other._elements
+        elif hasattr(other, '_elements') and hasattr(other, 'to_list'):
+            # It's a KotList or KotMutableList
+            other = set(other)
         return KotSet(self._elements.difference(other))
     
     # Operator-style set operations
@@ -447,9 +477,9 @@ class KotSet(Generic[T]):
         result.add(element)
         return KotSet(result)
     
-    def plus_collection(self, elements: Set[T] | List[T] | 'KotSet[T]') -> 'KotSet[T]':
+    def plus_collection(self, elements: Set[T] | List[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotSet[T]':
         """Returns a set containing all elements of the original set and the given collection."""
-        return self.union(elements if isinstance(elements, (set, KotSet)) else set(elements))
+        return self.union(elements)
     
     def minus(self, element: T) -> 'KotSet[T]':
         """Returns a set containing all elements of the original set except the given element."""
@@ -457,7 +487,7 @@ class KotSet(Generic[T]):
         result.discard(element)
         return KotSet(result)
     
-    def minus_collection(self, elements: Set[T] | List[T] | 'KotSet[T]') -> 'KotSet[T]':
+    def minus_collection(self, elements: Set[T] | List[T] | 'KotSet[T]' | 'KotList[T]' | 'KotMutableList[T]') -> 'KotSet[T]':
         """Returns a set containing all elements of the original set except those in the given collection."""
         return self.subtract(elements)
     

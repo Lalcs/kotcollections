@@ -364,3 +364,127 @@ class TestKotMutableSetTypeManagement(unittest.TestCase):
         # Can add more integers
         self.assertTrue(s.add(4))
         self.assertEqual(s.size, 3)
+
+
+class TestKotMutableSetWithKotList(unittest.TestCase):
+    """Test KotMutableSet accepting KotList and KotMutableList."""
+    
+    def test_init_from_kot_list(self):
+        """Test creating KotMutableSet from KotList."""
+        from kotcollections.kot_list import KotList
+        
+        kot_list = KotList([1, 2, 2, 3, 3, 3])
+        s = KotMutableSet(kot_list)
+        self.assertEqual(s.size, 3)  # Duplicates removed
+        self.assertTrue(1 in s)
+        self.assertTrue(2 in s)
+        self.assertTrue(3 in s)
+        
+        # Test mutation after creation
+        self.assertTrue(s.add(4))
+        self.assertEqual(s.size, 4)
+    
+    def test_add_all_with_kot_list(self):
+        """Test add_all with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotMutableSet([1, 2])
+        kot_list = KotList([2, 3, 4])
+        self.assertTrue(s.add_all(kot_list))
+        self.assertEqual(s.size, 4)
+        self.assertTrue(3 in s)
+        self.assertTrue(4 in s)
+        
+        # Test with KotMutableList
+        from kotcollections.kot_mutable_list import KotMutableList
+        kot_mutable_list = KotMutableList([4, 5, 6])
+        self.assertTrue(s.add_all(kot_mutable_list))
+        self.assertEqual(s.size, 6)
+    
+    def test_remove_all_with_kot_list(self):
+        """Test remove_all with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotMutableSet([1, 2, 3, 4, 5])
+        kot_list = KotList([2, 3, 4])
+        self.assertTrue(s.remove_all(kot_list))
+        self.assertEqual(s.size, 2)
+        self.assertTrue(1 in s)
+        self.assertTrue(5 in s)
+    
+    def test_retain_all_with_kot_list(self):
+        """Test retain_all with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotMutableSet([1, 2, 3, 4, 5])
+        kot_list = KotList([2, 3, 4, 6])
+        self.assertTrue(s.retain_all(kot_list))
+        self.assertEqual(s.size, 3)
+        self.assertTrue(2 in s)
+        self.assertTrue(3 in s)
+        self.assertTrue(4 in s)
+    
+    def test_union_update_with_kot_list(self):
+        """Test union_update with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotMutableSet([1, 2, 3])
+        kot_list = KotList([3, 4, 5, 5])
+        s.union_update(kot_list)
+        
+        self.assertEqual(s.size, 5)
+        for i in range(1, 6):
+            self.assertTrue(i in s)
+    
+    def test_intersect_update_with_kot_list(self):
+        """Test intersect_update with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotMutableSet([1, 2, 3, 4, 5])
+        kot_list = KotList([3, 4, 5, 6, 7])
+        s.intersect_update(kot_list)
+        
+        self.assertEqual(s.size, 3)
+        self.assertTrue(3 in s)
+        self.assertTrue(4 in s)
+        self.assertTrue(5 in s)
+    
+    def test_subtract_update_with_kot_list(self):
+        """Test subtract_update with KotList."""
+        from kotcollections.kot_list import KotList
+        
+        s = KotMutableSet([1, 2, 3, 4, 5])
+        kot_list = KotList([3, 4, 5])
+        s.subtract_update(kot_list)
+        
+        self.assertEqual(s.size, 2)
+        self.assertTrue(1 in s)
+        self.assertTrue(2 in s)
+    
+    def test_operators_with_kot_list(self):
+        """Test operators +=, -=, &= with KotList."""
+        from kotcollections.kot_list import KotList
+        from kotcollections.kot_mutable_list import KotMutableList
+        
+        # Test += operator
+        s1 = KotMutableSet([1, 2, 3])
+        kot_list1 = KotList([3, 4, 5])
+        s1 += kot_list1
+        self.assertEqual(s1.size, 5)
+        
+        # Test -= operator
+        s2 = KotMutableSet([1, 2, 3, 4, 5])
+        kot_list2 = KotMutableList([3, 4])
+        s2 -= kot_list2
+        self.assertEqual(s2.size, 3)
+        self.assertTrue(1 in s2)
+        self.assertTrue(2 in s2)
+        self.assertTrue(5 in s2)
+        
+        # Test &= operator
+        s3 = KotMutableSet([1, 2, 3, 4, 5])
+        kot_list3 = KotList([3, 4, 5, 6])
+        s3 &= kot_list3
+        self.assertEqual(s3.size, 3)
+        for i in [3, 4, 5]:
+            self.assertTrue(i in s3)
