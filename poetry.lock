@@ -82,5 +82,5 @@ toml = ["tomli ; python_full_version <= \"3.11.0a6\""]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.13"
-content-hash = "4de7e8261990eb4c32dff4b6bbbd3de2c2a90d98fc6b5b79e20c02813d7dc606"
+python-versions = ">=3.9"
+content-hash = "c2ecea5fdc12be8cb4e1683443cf907dbfbe46ef39098135a4cf13182df887cc"
