@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from kotlist import KotMutableList
+from kotcollections import KotMutableList
 
 
 class TestKotMutableListBasics(unittest.TestCase):

@@ -6,7 +6,7 @@ to Python developers.
 ## Installation
 
 ```bash
-pip install kotlist
+pip install kotcollections
 ```
 
 ## Features
@@ -81,7 +81,7 @@ The main difference is that Kotlin performs compile-time type checking, while Ko
 ## Basic Usage
 
 ```python
-from kotlist import KotList, KotMutableList
+from kotcollections import KotList, KotMutableList
 
 # Create a read-only list
 lst = KotList([1, 2, 3, 4, 5])

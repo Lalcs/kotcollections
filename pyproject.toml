@@ -1,5 +1,5 @@
 [project]
-name = "kotlist"
+name = "kotcollections"
 description = ""
 authors = [
     { name = "Vatis", email = "vatis@lalcs.com" }

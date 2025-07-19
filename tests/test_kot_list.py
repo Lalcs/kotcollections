@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from kotlist import KotList
+from kotcollections import KotList
 
 
 class TestKotListBasics(unittest.TestCase):
@@ -621,7 +621,7 @@ class TestKotListConversion(unittest.TestCase):
         self.assertEqual(lst.size, 3)
 
     def test_to_mutable_list(self):
-        from kotlist import KotMutableList
+        from kotcollections import KotMutableList
         lst = KotList([1, 2, 3])
         mutable = lst.to_mutable_list()
         self.assertIsInstance(mutable, KotMutableList)
@@ -720,7 +720,7 @@ class TestKotListTypeChecking(unittest.TestCase):
     
     def test_empty_list_then_add_kot_list(self):
         # Test adding KotList as first element to empty list (covers line 39)
-        from kotlist import KotMutableList
+        from kotcollections import KotMutableList
         empty = KotMutableList()
         kot_element = KotList([1, 2, 3])
         empty.add(kot_element)
