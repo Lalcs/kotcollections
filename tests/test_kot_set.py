@@ -5,6 +5,8 @@ Unit tests for KotSet class.
 import unittest
 
 from kotcollections.kot_set import KotSet
+from kotcollections.kot_map import KotMap
+from kotcollections.kot_list import KotList
 
 
 class TestKotSetBasics(unittest.TestCase):
@@ -504,34 +506,59 @@ class TestKotSetCollectionOps(unittest.TestCase):
         s = KotSet([1, 2, 3, 4, 5, 6])
         groups = s.group_by(lambda x: x % 2)
 
-        self.assertEqual(len(groups), 2)
-        evens = groups[0]
-        odds = groups[1]
+        self.assertIsInstance(groups, KotMap)
+        self.assertEqual(groups.size, 2)
+        evens = groups.get(0)
+        odds = groups.get(1)
 
+        self.assertIsInstance(evens, KotSet)
+        self.assertIsInstance(odds, KotSet)
         self.assertEqual(evens.size, 3)
         self.assertTrue(2 in evens and 4 in evens and 6 in evens)
 
         self.assertEqual(odds.size, 3)
         self.assertTrue(1 in odds and 3 in odds and 5 in odds)
+        
+        # Test KotMap operations
+        self.assertTrue(groups.contains_key(0))
+        self.assertTrue(groups.contains_key(1))
+        self.assertEqual(set(groups.keys), {0, 1})
 
     def test_associate(self):
         """Test associate operation."""
         s = KotSet([1, 2, 3])
         result = s.associate(lambda x: (x, x * x))
-        self.assertEqual(result, {1: 1, 2: 4, 3: 9})
+        self.assertIsInstance(result, KotMap)
+        self.assertEqual(result.to_dict(), {1: 1, 2: 4, 3: 9})
+        # Test KotMap operations
+        self.assertEqual(result.get(2), 4)
+        self.assertTrue(result.contains_key(1))
+        self.assertEqual(set(result.keys), {1, 2, 3})
+        self.assertEqual(set(result.values), {1, 4, 9})
 
     def test_associate_by(self):
         """Test associate_by operation."""
         s = KotSet(["hello", "world", "test"])
         result = s.associate_by(len)
-        self.assertEqual(result[4], "test")
-        self.assertIn(result[5], ["hello", "world"])  # Either could be the value
+        self.assertIsInstance(result, KotMap)
+        self.assertEqual(result.get(4), "test")
+        self.assertIn(result.get(5), ["hello", "world"])  # Either could be the value
+        # Test KotMap operations
+        self.assertTrue(result.contains_key(4))
+        self.assertTrue(result.contains_key(5))
+        self.assertEqual(set(result.keys), {4, 5})
 
     def test_associate_with(self):
         """Test associate_with operation."""
         s = KotSet([1, 2, 3])
         result = s.associate_with(lambda x: x * x)
-        self.assertEqual(result, {1: 1, 2: 4, 3: 9})
+        self.assertIsInstance(result, KotMap)
+        self.assertEqual(result.to_dict(), {1: 1, 2: 4, 3: 9})
+        # Test KotMap operations
+        self.assertEqual(result.get(2), 4)
+        self.assertTrue(result.contains_key(1))
+        self.assertEqual(set(result.keys), {1, 2, 3})
+        self.assertEqual(set(result.values), {1, 4, 9})
 
 
 class TestKotSetSetOperations(unittest.TestCase):
@@ -823,10 +850,25 @@ class TestKotSetNewMethods(unittest.TestCase):
             lambda x: x[0],  # Group by first letter
             lambda x: len(x)  # Transform to length
         )
-        self.assertIn('a', result)
-        self.assertIn('b', result)
-        self.assertEqual(len(result['a']), 2)
-        self.assertEqual(len(result['b']), 2)
+        self.assertIsInstance(result, KotMap)
+        self.assertTrue(result.contains_key('a'))
+        self.assertTrue(result.contains_key('b'))
+        
+        # Values should be KotList instances
+        a_values = result.get('a')
+        b_values = result.get('b')
+        self.assertIsInstance(a_values, KotList)
+        self.assertIsInstance(b_values, KotList)
+        
+        self.assertEqual(a_values.size, 2)
+        self.assertEqual(b_values.size, 2)
+        
+        # Check values are correct (order doesn't matter in sets)
+        self.assertEqual(set(a_values.to_list()), {5, 7})  # 'apple'(5) and 'apricot'(7)
+        self.assertEqual(set(b_values.to_list()), {6, 9})  # 'banana'(6) and 'blueberry'(9)
+        
+        # Test KotMap operations
+        self.assertEqual(set(result.keys), {'a', 'b'})
 
 
 class TestKotSetWithKotList(unittest.TestCase):

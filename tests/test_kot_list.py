@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from kotcollections import KotList
+from kotcollections import KotList, KotMap
 
 
 class TestKotListBasics(unittest.TestCase):
@@ -464,17 +464,35 @@ class TestKotListTransform(unittest.TestCase):
     def test_associate_with(self):
         lst = KotList(['a', 'bb', 'ccc'])
         assoc = lst.associate_with(lambda x: len(x))
-        self.assertEqual(assoc, {'a': 1, 'bb': 2, 'ccc': 3})
+        self.assertIsInstance(assoc, KotMap)
+        self.assertEqual(assoc.to_dict(), {'a': 1, 'bb': 2, 'ccc': 3})
+        # Test KotMap basic operations
+        self.assertEqual(assoc.get('a'), 1)
+        self.assertTrue(assoc.contains_key('bb'))
+        self.assertEqual(set(assoc.keys), {'a', 'bb', 'ccc'})
+        self.assertEqual(set(assoc.values), {1, 2, 3})
 
     def test_associate_by(self):
         lst = KotList(['a', 'bb', 'ccc'])
         assoc = lst.associate_by(lambda x: len(x))
-        self.assertEqual(assoc, {1: 'a', 2: 'bb', 3: 'ccc'})
+        self.assertIsInstance(assoc, KotMap)
+        self.assertEqual(assoc.to_dict(), {1: 'a', 2: 'bb', 3: 'ccc'})
+        # Test KotMap basic operations
+        self.assertEqual(assoc.get(1), 'a')
+        self.assertTrue(assoc.contains_key(2))
+        self.assertEqual(set(assoc.keys), {1, 2, 3})
+        self.assertEqual(sorted(assoc.values), ['a', 'bb', 'ccc'])
 
     def test_associate_by_with_value(self):
         lst = KotList(['a', 'bb', 'ccc'])
         assoc = lst.associate_by_with_value(lambda x: len(x), lambda x: x.upper())
-        self.assertEqual(assoc, {1: 'A', 2: 'BB', 3: 'CCC'})
+        self.assertIsInstance(assoc, KotMap)
+        self.assertEqual(assoc.to_dict(), {1: 'A', 2: 'BB', 3: 'CCC'})
+        # Test KotMap basic operations
+        self.assertEqual(assoc.get(1), 'A')
+        self.assertTrue(assoc.contains_key(3))
+        self.assertEqual(set(assoc.keys), {1, 2, 3})
+        self.assertEqual(sorted(assoc.values), ['A', 'BB', 'CCC'])
 
 
 class TestKotListFilter(unittest.TestCase):
@@ -694,15 +712,33 @@ class TestKotListGrouping(unittest.TestCase):
     def test_group_by(self):
         lst = KotList([1, 2, 3, 4, 5, 6])
         grouped = lst.group_by(lambda x: x % 2)
-        self.assertEqual(grouped[0].to_list(), [2, 4, 6])
-        self.assertEqual(grouped[1].to_list(), [1, 3, 5])
+        self.assertIsInstance(grouped, KotMap)
+        self.assertEqual(grouped.get(0).to_list(), [2, 4, 6])
+        self.assertEqual(grouped.get(1).to_list(), [1, 3, 5])
+        # Test KotMap operations
+        self.assertTrue(grouped.contains_key(0))
+        self.assertTrue(grouped.contains_key(1))
+        self.assertEqual(set(grouped.keys), {0, 1})
+        # Test that values are KotList instances
+        self.assertIsInstance(grouped.get(0), KotList)
+        self.assertIsInstance(grouped.get(1), KotList)
 
     def test_group_by_with_value(self):
         lst = KotList(['a', 'bb', 'ccc', 'dd', 'e'])
         grouped = lst.group_by_with_value(lambda x: len(x), lambda x: x.upper())
-        self.assertEqual(grouped[1].to_list(), ['A', 'E'])
-        self.assertEqual(grouped[2].to_list(), ['BB', 'DD'])
-        self.assertEqual(grouped[3].to_list(), ['CCC'])
+        self.assertIsInstance(grouped, KotMap)
+        self.assertEqual(grouped.get(1).to_list(), ['A', 'E'])
+        self.assertEqual(grouped.get(2).to_list(), ['BB', 'DD'])
+        self.assertEqual(grouped.get(3).to_list(), ['CCC'])
+        # Test KotMap operations
+        self.assertTrue(grouped.contains_key(1))
+        self.assertTrue(grouped.contains_key(2))
+        self.assertTrue(grouped.contains_key(3))
+        self.assertEqual(set(grouped.keys), {1, 2, 3})
+        # Test that values are KotList instances
+        self.assertIsInstance(grouped.get(1), KotList)
+        self.assertIsInstance(grouped.get(2), KotList)
+        self.assertIsInstance(grouped.get(3), KotList)
 
     def test_chunked(self):
         lst = KotList([1, 2, 3, 4, 5, 6, 7])

@@ -4,6 +4,8 @@ Unit tests for KotMutableSet class.
 
 import unittest
 
+from kotcollections.kot_list import KotList
+from kotcollections.kot_map import KotMap
 from kotcollections.kot_mutable_set import KotMutableSet
 from kotcollections.kot_set import KotSet
 
@@ -312,7 +314,7 @@ class TestKotMutableSetConversion(unittest.TestCase):
     def test_to_kot_set(self):
         """Test conversion to immutable KotSet."""
         ms = KotMutableSet([1, 2, 3])
-        s = ms.to_kot_set()
+        s = ms.to_set()
 
         # Check it's a KotSet
         self.assertIsInstance(s, KotSet)
@@ -368,54 +370,54 @@ class TestKotMutableSetTypeManagement(unittest.TestCase):
 
 class TestKotMutableSetWithKotList(unittest.TestCase):
     """Test KotMutableSet accepting KotList and KotMutableList."""
-    
+
     def test_init_from_kot_list(self):
         """Test creating KotMutableSet from KotList."""
         from kotcollections.kot_list import KotList
-        
+
         kot_list = KotList([1, 2, 2, 3, 3, 3])
         s = KotMutableSet(kot_list)
         self.assertEqual(s.size, 3)  # Duplicates removed
         self.assertTrue(1 in s)
         self.assertTrue(2 in s)
         self.assertTrue(3 in s)
-        
+
         # Test mutation after creation
         self.assertTrue(s.add(4))
         self.assertEqual(s.size, 4)
-    
+
     def test_add_all_with_kot_list(self):
         """Test add_all with KotList."""
         from kotcollections.kot_list import KotList
-        
+
         s = KotMutableSet([1, 2])
         kot_list = KotList([2, 3, 4])
         self.assertTrue(s.add_all(kot_list))
         self.assertEqual(s.size, 4)
         self.assertTrue(3 in s)
         self.assertTrue(4 in s)
-        
+
         # Test with KotMutableList
         from kotcollections.kot_mutable_list import KotMutableList
         kot_mutable_list = KotMutableList([4, 5, 6])
         self.assertTrue(s.add_all(kot_mutable_list))
         self.assertEqual(s.size, 6)
-    
+
     def test_remove_all_with_kot_list(self):
         """Test remove_all with KotList."""
         from kotcollections.kot_list import KotList
-        
+
         s = KotMutableSet([1, 2, 3, 4, 5])
         kot_list = KotList([2, 3, 4])
         self.assertTrue(s.remove_all(kot_list))
         self.assertEqual(s.size, 2)
         self.assertTrue(1 in s)
         self.assertTrue(5 in s)
-    
+
     def test_retain_all_with_kot_list(self):
         """Test retain_all with KotList."""
         from kotcollections.kot_list import KotList
-        
+
         s = KotMutableSet([1, 2, 3, 4, 5])
         kot_list = KotList([2, 3, 4, 6])
         self.assertTrue(s.retain_all(kot_list))
@@ -423,55 +425,55 @@ class TestKotMutableSetWithKotList(unittest.TestCase):
         self.assertTrue(2 in s)
         self.assertTrue(3 in s)
         self.assertTrue(4 in s)
-    
+
     def test_union_update_with_kot_list(self):
         """Test union_update with KotList."""
         from kotcollections.kot_list import KotList
-        
+
         s = KotMutableSet([1, 2, 3])
         kot_list = KotList([3, 4, 5, 5])
         s.union_update(kot_list)
-        
+
         self.assertEqual(s.size, 5)
         for i in range(1, 6):
             self.assertTrue(i in s)
-    
+
     def test_intersect_update_with_kot_list(self):
         """Test intersect_update with KotList."""
         from kotcollections.kot_list import KotList
-        
+
         s = KotMutableSet([1, 2, 3, 4, 5])
         kot_list = KotList([3, 4, 5, 6, 7])
         s.intersect_update(kot_list)
-        
+
         self.assertEqual(s.size, 3)
         self.assertTrue(3 in s)
         self.assertTrue(4 in s)
         self.assertTrue(5 in s)
-    
+
     def test_subtract_update_with_kot_list(self):
         """Test subtract_update with KotList."""
         from kotcollections.kot_list import KotList
-        
+
         s = KotMutableSet([1, 2, 3, 4, 5])
         kot_list = KotList([3, 4, 5])
         s.subtract_update(kot_list)
-        
+
         self.assertEqual(s.size, 2)
         self.assertTrue(1 in s)
         self.assertTrue(2 in s)
-    
+
     def test_operators_with_kot_list(self):
         """Test operators +=, -=, &= with KotList."""
         from kotcollections.kot_list import KotList
         from kotcollections.kot_mutable_list import KotMutableList
-        
+
         # Test += operator
         s1 = KotMutableSet([1, 2, 3])
         kot_list1 = KotList([3, 4, 5])
         s1 += kot_list1
         self.assertEqual(s1.size, 5)
-        
+
         # Test -= operator
         s2 = KotMutableSet([1, 2, 3, 4, 5])
         kot_list2 = KotMutableList([3, 4])
@@ -480,7 +482,7 @@ class TestKotMutableSetWithKotList(unittest.TestCase):
         self.assertTrue(1 in s2)
         self.assertTrue(2 in s2)
         self.assertTrue(5 in s2)
-        
+
         # Test &= operator
         s3 = KotMutableSet([1, 2, 3, 4, 5])
         kot_list3 = KotList([3, 4, 5, 6])
@@ -488,3 +490,92 @@ class TestKotMutableSetWithKotList(unittest.TestCase):
         self.assertEqual(s3.size, 3)
         for i in [3, 4, 5]:
             self.assertTrue(i in s3)
+
+
+class TestKotMutableSetInheritedTransformations(unittest.TestCase):
+    """Test that inherited transformation methods from KotSet work correctly with KotMutableSet."""
+
+    def test_group_by_returns_kot_map(self):
+        """Test group_by returns KotMap."""
+        s = KotMutableSet([1, 2, 3, 4, 5, 6])
+        groups = s.group_by(lambda x: x % 2)
+
+        self.assertIsInstance(groups, KotMap)
+        self.assertEqual(groups.size, 2)
+
+        evens = groups.get(0)
+        odds = groups.get(1)
+        self.assertIsInstance(evens, KotSet)
+        self.assertIsInstance(odds, KotSet)
+
+        self.assertEqual(evens.size, 3)
+        self.assertEqual(odds.size, 3)
+
+        # Verify KotMap methods work
+        self.assertTrue(groups.contains_key(0))
+        self.assertTrue(groups.contains_key(1))
+        self.assertEqual(set(groups.keys), {0, 1})
+
+    def test_group_by_to_returns_kot_map(self):
+        """Test group_by_to returns KotMap with KotList values."""
+        s = KotMutableSet(['apple', 'apricot', 'banana', 'blueberry'])
+        result = s.group_by_to(
+            lambda x: x[0],  # Group by first letter
+            lambda x: len(x)  # Transform to length
+        )
+
+        self.assertIsInstance(result, KotMap)
+        self.assertTrue(result.contains_key('a'))
+        self.assertTrue(result.contains_key('b'))
+
+        # Values should be KotList instances
+        a_values = result.get('a')
+        b_values = result.get('b')
+        self.assertIsInstance(a_values, KotList)
+        self.assertIsInstance(b_values, KotList)
+
+        self.assertEqual(a_values.size, 2)
+        self.assertEqual(b_values.size, 2)
+
+        # Verify KotMap methods work
+        self.assertEqual(set(result.keys), {'a', 'b'})
+
+    def test_associate_returns_kot_map(self):
+        """Test associate returns KotMap."""
+        s = KotMutableSet([1, 2, 3])
+        result = s.associate(lambda x: (x, x * x))
+
+        self.assertIsInstance(result, KotMap)
+        self.assertEqual(result.to_dict(), {1: 1, 2: 4, 3: 9})
+
+        # Verify KotMap methods work
+        self.assertEqual(result.get(2), 4)
+        self.assertTrue(result.contains_key(3))
+        self.assertEqual(set(result.keys), {1, 2, 3})
+
+    def test_associate_by_returns_kot_map(self):
+        """Test associate_by returns KotMap."""
+        s = KotMutableSet(["hello", "world", "test"])
+        result = s.associate_by(len)
+
+        self.assertIsInstance(result, KotMap)
+        self.assertEqual(result.get(4), "test")
+        self.assertIn(result.get(5), ["hello", "world"])
+
+        # Verify KotMap methods work
+        self.assertTrue(result.contains_key(4))
+        self.assertTrue(result.contains_key(5))
+        self.assertEqual(set(result.keys), {4, 5})
+
+    def test_associate_with_returns_kot_map(self):
+        """Test associate_with returns KotMap."""
+        s = KotMutableSet([1, 2, 3])
+        result = s.associate_with(lambda x: x * x)
+
+        self.assertIsInstance(result, KotMap)
+        self.assertEqual(result.to_dict(), {1: 1, 2: 4, 3: 9})
+
+        # Verify KotMap methods work
+        self.assertEqual(result.get(2), 4)
+        self.assertTrue(result.contains_key(1))
+        self.assertEqual(set(result.values), {1, 4, 9})

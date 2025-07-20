@@ -207,7 +207,7 @@ class KotMutableSet(KotSet[T]):
 
     # Conversion to immutable
 
-    def to_kot_set(self) -> KotSet[T]:
+    def to_set(self) -> KotSet[T]:
         """Returns an immutable copy of this set."""
         return KotSet(self._elements.copy())
 

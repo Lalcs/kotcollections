@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from kotcollections import KotMutableList
+from kotcollections import KotMutableList, KotMap
 
 
 class TestKotMutableListBasics(unittest.TestCase):
@@ -451,3 +451,59 @@ class TestKotMutableListTypeChecking(unittest.TestCase):
         # Other types should fail
         with self.assertRaises(TypeError):
             lst.add(123)
+
+
+class TestKotMutableListInheritedTransformations(unittest.TestCase):
+    """Test that inherited transformation methods from KotList work correctly with KotMutableList."""
+    
+    def test_associate_with_returns_kot_map(self):
+        lst = KotMutableList(['a', 'bb', 'ccc'])
+        assoc = lst.associate_with(lambda x: len(x))
+        self.assertIsInstance(assoc, KotMap)
+        self.assertEqual(assoc.to_dict(), {'a': 1, 'bb': 2, 'ccc': 3})
+        # Verify KotMap methods work
+        self.assertEqual(assoc.get('a'), 1)
+        self.assertTrue(assoc.contains_key('bb'))
+    
+    def test_associate_by_returns_kot_map(self):
+        lst = KotMutableList(['a', 'bb', 'ccc'])
+        assoc = lst.associate_by(lambda x: len(x))
+        self.assertIsInstance(assoc, KotMap)
+        self.assertEqual(assoc.to_dict(), {1: 'a', 2: 'bb', 3: 'ccc'})
+        # Verify KotMap methods work
+        self.assertEqual(assoc.get(2), 'bb')
+        self.assertTrue(assoc.contains_key(3))
+    
+    def test_associate_by_with_value_returns_kot_map(self):
+        lst = KotMutableList(['a', 'bb', 'ccc'])
+        assoc = lst.associate_by_with_value(lambda x: len(x), lambda x: x.upper())
+        self.assertIsInstance(assoc, KotMap)
+        self.assertEqual(assoc.to_dict(), {1: 'A', 2: 'BB', 3: 'CCC'})
+        # Verify KotMap methods work
+        self.assertEqual(assoc.get(1), 'A')
+        self.assertTrue(assoc.contains_key(2))
+    
+    def test_group_by_returns_kot_map(self):
+        lst = KotMutableList([1, 2, 3, 4, 5, 6])
+        grouped = lst.group_by(lambda x: x % 2)
+        self.assertIsInstance(grouped, KotMap)
+        self.assertEqual(grouped.get(0).to_list(), [2, 4, 6])
+        self.assertEqual(grouped.get(1).to_list(), [1, 3, 5])
+        # Verify KotMap methods work
+        self.assertTrue(grouped.contains_key(0))
+        self.assertTrue(grouped.contains_key(1))
+        # Verify values are KotList instances
+        self.assertIsInstance(grouped.get(0), KotMutableList.__bases__[0])  # Should be KotList
+    
+    def test_group_by_with_value_returns_kot_map(self):
+        lst = KotMutableList(['a', 'bb', 'ccc', 'dd', 'e'])
+        grouped = lst.group_by_with_value(lambda x: len(x), lambda x: x.upper())
+        self.assertIsInstance(grouped, KotMap)
+        self.assertEqual(grouped.get(1).to_list(), ['A', 'E'])
+        self.assertEqual(grouped.get(2).to_list(), ['BB', 'DD'])
+        self.assertEqual(grouped.get(3).to_list(), ['CCC'])
+        # Verify KotMap methods work
+        self.assertTrue(grouped.contains_key(1))
+        self.assertEqual(set(grouped.keys), {1, 2, 3})
+        # Verify values are KotList instances
+        self.assertIsInstance(grouped.get(1), KotMutableList.__bases__[0])  # Should be KotList

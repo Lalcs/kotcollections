@@ -1,48 +1,49 @@
 # kotcollections API Reference
 
-This document provides detailed information about all methods available in kotcollections. For basic usage and getting started, please refer to the [README.md](../README.md).
+This document provides detailed information about all methods available in kotcollections. For basic usage and getting
+started, please refer to the [README.md](../README.md).
 
 ## Table of Contents
 
 - [KotList Methods](#kotlist-methods)
-  - [Basic Properties and Access](#basic-properties-and-access)
-  - [Search Methods](#search-methods)
-  - [Transformation Methods](#transformation-methods)
-  - [Filtering Methods](#filtering-methods)
-  - [Testing Methods](#testing-methods)
-  - [Aggregation Methods](#aggregation-methods)
-  - [Sorting Methods](#sorting-methods)
-  - [Grouping Methods](#grouping-methods)
-  - [Collection Operations](#collection-operations)
-  - [Other Operations](#other-operations)
-  - [Conversion Methods](#conversion-methods)
+    - [Basic Properties and Access](#basic-properties-and-access)
+    - [Search Methods](#search-methods)
+    - [Transformation Methods](#transformation-methods)
+    - [Filtering Methods](#filtering-methods)
+    - [Testing Methods](#testing-methods)
+    - [Aggregation Methods](#aggregation-methods)
+    - [Sorting Methods](#sorting-methods)
+    - [Grouping Methods](#grouping-methods)
+    - [Collection Operations](#collection-operations)
+    - [Other Operations](#other-operations)
+    - [Conversion Methods](#conversion-methods)
 - [KotMutableList Additional Methods](#kotmutablelist-additional-methods)
-  - [Addition Methods](#addition-methods)
-  - [Modification Methods](#modification-methods)
-  - [In-place Sorting](#in-place-sorting)
+    - [Addition Methods](#addition-methods)
+    - [Modification Methods](#modification-methods)
+    - [In-place Sorting](#in-place-sorting)
 - [KotSet Methods](#kotset-methods)
-  - [Basic Usage](#kotset-basic-usage)
-  - [Set Operations](#set-operations)
-  - [Functional Operations](#functional-operations)
-  - [Element Access](#element-access)
+    - [Basic Usage](#kotset-basic-usage)
+    - [Set Operations](#set-operations)
+    - [Functional Operations](#functional-operations)
+    - [Element Access](#element-access)
 - [KotMutableSet Additional Methods](#kotmutableset-additional-methods)
-  - [Basic Usage](#kotmutableset-basic-usage)
-  - [Mutation Operations](#mutation-operations)
-  - [Predicate-based Operations](#predicate-based-operations)
-  - [In-place Set Operations](#in-place-set-operations)
-  - [Conversion](#conversion)
+    - [Basic Usage](#kotmutableset-basic-usage)
+    - [Mutation Operations](#mutation-operations)
+    - [Predicate-based Operations](#predicate-based-operations)
+    - [In-place Set Operations](#in-place-set-operations)
+    - [Conversion](#conversion)
 - [KotMap Methods](#kotmap-methods)
-  - [Basic Usage](#kotmap-basic-usage)
-  - [Access Operations](#access-operations)
-  - [Checking Operations](#checking-operations)
-  - [Filtering Operations](#filtering-operations)
-  - [Transformation Operations](#transformation-operations)
-  - [Finding Operations](#finding-operations)
-  - [Other Map Operations](#other-map-operations)
+    - [Basic Usage](#kotmap-basic-usage)
+    - [Access Operations](#access-operations)
+    - [Checking Operations](#checking-operations)
+    - [Filtering Operations](#filtering-operations)
+    - [Transformation Operations](#transformation-operations)
+    - [Finding Operations](#finding-operations)
+    - [Other Map Operations](#other-map-operations)
 - [KotMutableMap Additional Methods](#kotmutablemap-additional-methods)
-  - [Basic Usage](#kotmutablemap-basic-usage)
-  - [Mutation Operations](#mutation-operations-map)
-  - [Advanced Mutation Operations](#advanced-mutation-operations)
+    - [Basic Usage](#kotmutablemap-basic-usage)
+    - [Mutation Operations](#mutation-operations-map)
+    - [Advanced Mutation Operations](#advanced-mutation-operations)
 
 ## KotList Methods
 
@@ -89,7 +90,8 @@ print(lst[1])  # 20 (same behavior)
 
 #### get_or_null(index) / get_or_none(index)
 
-Gets the element at the specified index (returns None if out of range). Both `get_or_null()` and `get_or_none()` can be used.
+Gets the element at the specified index (returns None if out of range). Both `get_or_null()` and `get_or_none()` can be
+used.
 
 ```python
 lst = KotList([10, 20, 30])
@@ -212,7 +214,8 @@ print(indexed.to_list())  # ['0:a', '1:b', '2:c']
 
 #### map_not_null(transform) / map_not_none(transform)
 
-Creates a new list containing only non-None transformation results. Both `map_not_null()` and `map_not_none()` can be used.
+Creates a new list containing only non-None transformation results. Both `map_not_null()` and `map_not_none()` can be
+used.
 
 ```python
 lst = KotList([1, 2, 3, 4])
@@ -242,22 +245,32 @@ print(flattened.to_list())  # [1, 2, 3, 4, 5]
 
 #### associate_with(value_selector)
 
-Creates a dictionary with elements as keys.
+Creates a KotMap with elements as keys.
 
 ```python
 lst = KotList(['a', 'bb', 'ccc'])
 length_map = lst.associate_with(lambda x: len(x))
-print(length_map)  # {'a': 1, 'bb': 2, 'ccc': 3}
+print(length_map.to_dict())  # {'a': 1, 'bb': 2, 'ccc': 3}
+
+# Use as KotMap
+print(length_map.get('bb'))  # 2
+print(length_map.contains_key('a'))  # True
+print(list(length_map.keys()))  # ['a', 'bb', 'ccc']
 ```
 
 #### associate_by(key_selector)
 
-Creates a dictionary with keys generated from elements.
+Creates a KotMap with keys generated from elements.
 
 ```python
 lst = KotList(['a', 'bb', 'ccc'])
 by_length = lst.associate_by(lambda x: len(x))
-print(by_length)  # {1: 'a', 2: 'bb', 3: 'ccc'}
+print(by_length.to_dict())  # {1: 'a', 2: 'bb', 3: 'ccc'}
+
+# Use as KotMap
+print(by_length.get(2))  # 'bb'
+print(by_length.contains_key(1))  # True
+print(list(by_length.values()))  # ['a', 'bb', 'ccc']
 ```
 
 ### Filtering Methods
@@ -462,13 +475,23 @@ print(shuffled.to_list())  # Shuffled elements
 
 #### group_by(key_selector)
 
-Groups elements by key.
+Groups elements by key, returning a KotMap where values are KotList instances.
 
 ```python
 lst = KotList([1, 2, 3, 4, 5, 6])
 by_parity = lst.group_by(lambda x: x % 2)
-print(by_parity[0].to_list())  # [2, 4, 6]
-print(by_parity[1].to_list())  # [1, 3, 5]
+
+# Access using KotMap methods
+print(by_parity.get(0).to_list())  # [2, 4, 6]
+print(by_parity.get(1).to_list())  # [1, 3, 5]
+
+# Other KotMap operations
+print(by_parity.contains_key(0))  # True
+print(list(by_parity.keys()))  # [0, 1]
+
+# Values are KotList instances
+for key, group in by_parity.entries():
+    print(f"Key {key}: {group.to_list()}")
 ```
 
 #### chunked(size)
@@ -914,7 +937,61 @@ avg_result = s.average(lambda x: x)  # 3.0
 max_result = s.max_or_none()  # 5
 
 # Grouping
-grouped = s.group_by(lambda x: x % 2)  # {0: KotSet([2, 4]), 1: KotSet([1, 3, 5])}
+grouped = s.group_by(lambda x: x % 2)  # Returns KotMap with KotSet values
+print(grouped.get(0))  # KotSet([2, 4])
+print(grouped.get(1))  # KotSet([1, 3, 5])
+
+# Group and transform values
+grouped_lengths = s.group_by_to(
+    lambda x: x % 2,  # Group by parity
+    lambda x: x * x  # Transform to squares
+)
+print(grouped_lengths.get(0).to_list())  # [4, 16] (squares of even numbers)
+print(grouped_lengths.get(1).to_list())  # [1, 9, 25] (squares of odd numbers)
+```
+
+### Transformation Methods
+
+#### associate(transform)
+
+Returns a KotMap containing key-value pairs provided by transform function.
+
+```python
+s = KotSet([1, 2, 3])
+pairs = s.associate(lambda x: (x, x * x))
+print(pairs.to_dict())  # {1: 1, 2: 4, 3: 9}
+
+# Use as KotMap
+print(pairs.get(2))  # 4
+print(pairs.contains_key(3))  # True
+```
+
+#### associate_by(key_selector)
+
+Returns a KotMap with keys generated by key_selector and values from elements.
+
+```python
+s = KotSet(["hello", "world", "test"])
+by_length = s.associate_by(len)
+print(by_length.get(4))  # "test"
+print(by_length.get(5))  # "hello" or "world" (order not guaranteed in sets)
+
+# Use as KotMap
+print(set(by_length.keys))  # {4, 5}
+```
+
+#### associate_with(value_selector)
+
+Returns a KotMap where keys are elements and values are produced by value_selector.
+
+```python
+s = KotSet(["apple", "banana", "cherry"])
+length_map = s.associate_with(len)
+print(length_map.to_dict())  # {'apple': 5, 'banana': 6, 'cherry': 6}
+
+# Use as KotMap
+print(length_map.get("apple"))  # 5
+print(list(length_map.values))  # [5, 6, 6] (order may vary)
 ```
 
 ### Element Access
@@ -1002,7 +1079,7 @@ ms1 &= ms2  # intersect_update
 ```python
 # Convert to immutable
 mutable_set = KotMutableSet([1, 2, 3])
-immutable_set = mutable_set.to_kot_set()  # Returns KotSet
+immutable_set = mutable_set.to_set()  # Returns KotSet
 
 # Convert to Python types
 python_set = mutable_set.to_set()  # Returns set
@@ -1303,12 +1380,14 @@ m = KotMap({"a": 1, "b": 2, "c": 3})
 print(m.join_to_string())  # "a=1, b=2, c=3"
 
 # Custom format
-print(m.join_to_string(
-    separator=" | ",
-    prefix="{",
-    postfix="}",
-    transform=lambda k, v: f"{k}:{v}"
-))  # "{a:1 | b:2 | c:3}"
+print(
+    m.join_to_string(
+        separator=" | ",
+        prefix="{",
+        postfix="}",
+        transform=lambda k, v: f"{k}:{v}"
+    )
+)  # "{a:1 | b:2 | c:3}"
 ```
 
 #### to_list() / to_dict()
@@ -1352,7 +1431,7 @@ Associates the specified value with the specified key in the map.
 ```python
 mm = KotMutableMap({"a": 1})
 old_value = mm.put("a", 10)  # Returns 1 (old value)
-new_value = mm.put("b", 2)   # Returns None (new key)
+new_value = mm.put("b", 2)  # Returns None (new key)
 ```
 
 #### put_all(from_map)
@@ -1372,7 +1451,7 @@ Associates the value with the key only if it is not already associated.
 ```python
 mm = KotMutableMap({"a": 1})
 result1 = mm.put_if_absent("a", 10)  # Returns 1 (existing value)
-result2 = mm.put_if_absent("b", 2)   # Returns None (added)
+result2 = mm.put_if_absent("b", 2)  # Returns None (added)
 print(mm.to_dict())  # {'a': 1, 'b': 2}
 ```
 
@@ -1501,5 +1580,6 @@ mm -= "b"  # Operator shortcut
 - `KotList` internally uses Python's standard list, so basic operation performance is equivalent to standard lists
 - `KotSet` internally uses Python's standard set, providing O(1) average case for add, remove, and contains operations
 - `KotMap` internally uses Python's standard dict, providing O(1) average case for get, put, and contains operations
-- When using method chaining extensively, be aware that each method creates a new collection, which may impact memory usage
+- When using method chaining extensively, be aware that each method creates a new collection, which may impact memory
+  usage
 - For large datasets, consider generator-based implementations

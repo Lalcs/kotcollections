@@ -2,12 +2,18 @@ import bisect
 import random as _random
 from collections.abc import Iterable
 from functools import reduce, cmp_to_key
-from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Set, Dict, Union
+from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Dict, Union, TYPE_CHECKING
 
 T = TypeVar('T')
 R = TypeVar('R')
 K = TypeVar('K')
 V = TypeVar('V')
+
+if TYPE_CHECKING:
+    from kotcollections.kot_map import KotMap
+    from kotcollections.kot_mutable_list import KotMutableList
+    from kotcollections.kot_mutable_set import KotMutableSet
+    from kotcollections.kot_set import KotSet
 
 
 class KotList(Generic[T]):
@@ -287,23 +293,23 @@ class KotList(Generic[T]):
                 result.append(element)
         return KotList(result)
 
-    def associate_with(self, value_selector: Callable[[T], V]) -> Dict[T, V]:
-        return {element: value_selector(element) for element in self._elements}
+    def associate_with(self, value_selector: Callable[[T], V]) -> 'KotMap[T, V]':
+        return KotMap({element: value_selector(element) for element in self._elements})
 
-    def associate_by(self, key_selector: Callable[[T], K]) -> Dict[K, T]:
+    def associate_by(self, key_selector: Callable[[T], K]) -> 'KotMap[K, T]':
         result = {}
         for element in self._elements:
             result[key_selector(element)] = element
-        return result
+        return KotMap(result)
 
     def associate_by_with_value(
         self, key_selector: Callable[[T], K],
         value_transform: Callable[[T], V]
-    ) -> Dict[K, V]:
+    ) -> 'KotMap[K, V]':
         result = {}
         for element in self._elements:
             result[key_selector(element)] = value_transform(element)
-        return result
+        return KotMap(result)
 
     def filter(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
         return KotList([element for element in self._elements if predicate(element)])
@@ -419,26 +425,26 @@ class KotList(Generic[T]):
             _random.shuffle(elements_copy)
         return KotList(elements_copy)
 
-    def group_by(self, key_selector: Callable[[T], K]) -> Dict[K, 'KotList[T]']:
+    def group_by(self, key_selector: Callable[[T], K]) -> 'KotMap[K, KotList[T]]':
         result: Dict[K, List[T]] = {}
         for element in self._elements:
             key = key_selector(element)
             if key not in result:
                 result[key] = []
             result[key].append(element)
-        return {k: KotList(v) for k, v in result.items()}
+        return KotMap({k: KotList(v) for k, v in result.items()})
 
     def group_by_with_value(
         self, key_selector: Callable[[T], K],
         value_transform: Callable[[T], V]
-    ) -> Dict[K, 'KotList[V]']:
+    ) -> 'KotMap[K, KotList[V]]':
         result: Dict[K, List[V]] = {}
         for element in self._elements:
             key = key_selector(element)
             if key not in result:
                 result[key] = []
             result[key].append(value_transform(element))
-        return {k: KotList(v) for k, v in result.items()}
+        return KotMap({k: KotList(v) for k, v in result.items()})
 
     def chunked(self, size: int) -> 'KotList[KotList[T]]':
         if size <= 0:
@@ -572,16 +578,13 @@ class KotList(Generic[T]):
         return self._elements.copy()
 
     def to_mutable_list(self) -> 'KotMutableList[T]':
-        from .kot_mutable_list import KotMutableList
-        return KotMutableList(self._elements)
+        return KotMutableList(self._elements.copy())
 
     def to_set(self) -> 'KotSet[T]':
-        from .kot_set import KotSet
-        return KotSet(self._elements)
+        return KotSet(self._elements.copy())
 
     def to_mutable_set(self) -> 'KotMutableSet[T]':
-        from .kot_mutable_set import KotMutableSet
-        return KotMutableSet(self._elements)
+        return KotMutableSet(self._elements.copy())
 
     def join_to_string(
         self, separator: str = ", ", prefix: str = "", postfix: str = "",
