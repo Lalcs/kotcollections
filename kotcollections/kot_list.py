@@ -2,7 +2,7 @@ import bisect
 import random as _random
 from collections.abc import Iterable
 from functools import reduce, cmp_to_key
-from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Dict, Union, TYPE_CHECKING
+from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Dict, Union, TYPE_CHECKING, Set
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -294,9 +294,11 @@ class KotList(Generic[T]):
         return KotList(result)
 
     def associate_with(self, value_selector: Callable[[T], V]) -> 'KotMap[T, V]':
+        from kotcollections.kot_map import KotMap
         return KotMap({element: value_selector(element) for element in self._elements})
 
     def associate_by(self, key_selector: Callable[[T], K]) -> 'KotMap[K, T]':
+        from kotcollections.kot_map import KotMap
         result = {}
         for element in self._elements:
             result[key_selector(element)] = element
@@ -306,6 +308,7 @@ class KotList(Generic[T]):
         self, key_selector: Callable[[T], K],
         value_transform: Callable[[T], V]
     ) -> 'KotMap[K, V]':
+        from kotcollections.kot_map import KotMap
         result = {}
         for element in self._elements:
             result[key_selector(element)] = value_transform(element)
@@ -426,6 +429,7 @@ class KotList(Generic[T]):
         return KotList(elements_copy)
 
     def group_by(self, key_selector: Callable[[T], K]) -> 'KotMap[K, KotList[T]]':
+        from kotcollections.kot_map import KotMap
         result: Dict[K, List[T]] = {}
         for element in self._elements:
             key = key_selector(element)
@@ -438,6 +442,7 @@ class KotList(Generic[T]):
         self, key_selector: Callable[[T], K],
         value_transform: Callable[[T], V]
     ) -> 'KotMap[K, KotList[V]]':
+        from kotcollections.kot_map import KotMap
         result: Dict[K, List[V]] = {}
         for element in self._elements:
             key = key_selector(element)
@@ -577,13 +582,22 @@ class KotList(Generic[T]):
     def to_list(self) -> List[T]:
         return self._elements.copy()
 
-    def to_mutable_list(self) -> 'KotMutableList[T]':
+    def to_set(self) -> Set[T]:
+        return set(self._elements.copy())
+
+    def to_kot_list(self) -> 'KotList[T]':
+        return KotList(self._elements.copy())
+
+    def to_kot_mutable_list(self) -> 'KotMutableList[T]':
+        from kotcollections.kot_mutable_list import KotMutableList
         return KotMutableList(self._elements.copy())
 
-    def to_set(self) -> 'KotSet[T]':
+    def to_kot_set(self) -> 'KotSet[T]':
+        from kotcollections.kot_set import KotSet
         return KotSet(self._elements.copy())
 
-    def to_mutable_set(self) -> 'KotMutableSet[T]':
+    def to_kot_mutable_set(self) -> 'KotMutableSet[T]':
+        from kotcollections.kot_mutable_set import KotMutableSet
         return KotMutableSet(self._elements.copy())
 
     def join_to_string(

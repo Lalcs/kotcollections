@@ -169,6 +169,3 @@ class KotMutableList(KotList[T]):
                 return self._original.size
 
         return KotReversedMutableList(self)
-
-    def to_list(self) -> 'KotList[T]':
-        return KotList(self._elements.copy())

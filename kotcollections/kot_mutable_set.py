@@ -205,12 +205,6 @@ class KotMutableSet(KotSet[T]):
         self.intersect_update(other)
         return self
 
-    # Conversion to immutable
-
-    def to_set(self) -> KotSet[T]:
-        """Returns an immutable copy of this set."""
-        return KotSet(self._elements.copy())
-
     def __repr__(self) -> str:
         """Return string representation of the mutable set."""
         return f"KotMutableSet({list(self._elements)})"
