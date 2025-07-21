@@ -1,6 +1,6 @@
 [project]
 name = "kotcollections"
-description = ""
+description = "kotcollections is a Python library that fully reproduces Kotlin's Collections interfaces. It brings Kotlin's rich collection operations to Python developers with List, Set, and Map implementations."
 authors = [
     { name = "Vatis", email = "vatis@lalcs.com" }
 ]
