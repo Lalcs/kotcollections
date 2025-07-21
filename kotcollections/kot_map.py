@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TypeVar, Generic, Callable, Optional, Dict, Iterator, Any, Tuple, List, Set, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from kotcollections import KotMutableMap
+    from kotcollections import KotMutableMap, KotList, KotSet
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -124,19 +124,22 @@ class KotMap(Generic[K, V]):
     # Collection views
 
     @property
-    def keys(self) -> Set[K]:
+    def keys(self) -> 'KotSet[K]':
         """Returns a read-only Set of all keys in this map."""
-        return set(self._elements.keys())
+        from kotcollections import KotSet
+        return KotSet(list(self._elements.keys()))
 
     @property
-    def values(self) -> List[V]:
+    def values(self) -> 'KotList[V]':
         """Returns a read-only Collection of all values in this map."""
-        return list(self._elements.values())
+        from kotcollections import KotList
+        return KotList(self._elements.values())
 
     @property
-    def entries(self) -> Set[Tuple[K, V]]:
+    def entries(self) -> 'KotSet[Tuple[K, V]]':
         """Returns a read-only Set of all key/value pairs in this map."""
-        return set(self._elements.items())
+        from kotcollections import KotSet
+        return KotSet(list(self._elements.items()))
 
     # Checking operations
 
@@ -191,9 +194,10 @@ class KotMap(Generic[K, V]):
 
     # Transformation operations
 
-    def map(self, transform: Callable[[K, V], R]) -> List[R]:
+    def map(self, transform: Callable[[K, V], R]) -> 'KotList[R]':
         """Returns a list containing the results of applying the given transform function to each entry."""
-        return [transform(k, v) for k, v in self._elements.items()]
+        from kotcollections import KotList
+        return KotList([transform(k, v) for k, v in self._elements.items()])
 
     def map_keys(self, transform: Callable[[K, V], R]) -> 'KotMap[R, V]':
         """Returns a new map with entries having the keys obtained by applying the transform function to each entry."""
@@ -205,25 +209,27 @@ class KotMap(Generic[K, V]):
         transformed_pairs = [(k, transform(k, v)) for k, v in self._elements.items()]
         return KotMap(transformed_pairs)
 
-    def map_not_null(self, transform: Callable[[K, V], Optional[R]]) -> List[R]:
+    def map_not_null(self, transform: Callable[[K, V], Optional[R]]) -> 'KotList[R]':
         """Returns a list containing only the non-null results of applying the given transform function."""
+        from kotcollections import KotList
         results = []
         for k, v in self._elements.items():
             result = transform(k, v)
             if result is not None:
                 results.append(result)
-        return results
+        return KotList(results)
 
-    def map_not_none(self, transform: Callable[[K, V], Optional[R]]) -> List[R]:
+    def map_not_none(self, transform: Callable[[K, V], Optional[R]]) -> 'KotList[R]':
         """Pythonic alias for map_not_null()."""
         return self.map_not_null(transform)
 
-    def flat_map(self, transform: Callable[[K, V], Iterator[R]]) -> List[R]:
+    def flat_map(self, transform: Callable[[K, V], Iterator[R]]) -> 'KotList[R]':
         """Returns a single list of all elements yielded from results of transform function."""
+        from kotcollections import KotList
         results = []
         for k, v in self._elements.items():
             results.extend(transform(k, v))
-        return results
+        return KotList(results)
 
     # Conversion operations
 
@@ -313,6 +319,8 @@ class KotMap(Generic[K, V]):
         
         If a key is present in both maps, the value from the other map will be used.
         """
+        from kotcollections import KotList
+        
         new_elements = dict(self._elements)
 
         if isinstance(other, tuple):
@@ -320,6 +328,14 @@ class KotMap(Generic[K, V]):
             new_elements[key] = value
         elif isinstance(other, KotMap):
             new_elements.update(other._elements)
+        elif isinstance(other, KotList):
+            # Support KotList of pairs
+            for item in other:
+                if isinstance(item, tuple) and len(item) == 2:
+                    key, value = item
+                    new_elements[key] = value
+                else:
+                    raise ValueError(f"Expected a tuple of (key, value), got {type(item)}")
         else:  # Dict
             new_elements.update(other)
 
@@ -327,8 +343,14 @@ class KotMap(Generic[K, V]):
 
     def minus(self, key: K | List[K] | Set[K]) -> 'KotMap[K, V]':
         """Returns a map containing all entries from this map except those whose keys are in the given collection."""
+        from kotcollections import KotSet
+        
         if isinstance(key, (list, set)):
             new_elements = {k: v for k, v in self._elements.items() if k not in key}
+        elif isinstance(key, KotSet):
+            # Convert KotSet to set for efficient lookup
+            key_set = set(key)
+            new_elements = {k: v for k, v in self._elements.items() if k not in key_set}
         else:
             new_elements = {k: v for k, v in self._elements.items() if k != key}
 

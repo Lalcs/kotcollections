@@ -186,7 +186,16 @@ class KotList(Generic[T]):
         return element in self._elements
 
     def contains_all(self, elements: Iterable[T]) -> bool:
-        elements_set = set(elements)
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
+        if isinstance(elements, KotSet):
+            elements_set = set(elements)
+        elif isinstance(elements, KotMap):
+            elements_set = set(elements.values)
+        else:
+            elements_set = set(elements)
         return all(elem in self._elements for elem in elements_set)
 
     def index_of(self, element: T) -> int:
@@ -502,27 +511,66 @@ class KotList(Generic[T]):
         return KotList(result)
 
     def intersect(self, other: Iterable[T]) -> 'KotList[T]':
-        other_set = set(other)
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
+        if isinstance(other, KotSet):
+            other_set = set(other)
+        elif isinstance(other, KotMap):
+            other_set = set(other.values)
+        else:
+            other_set = set(other)
         return KotList([element for element in self._elements if element in other_set])
 
     def union(self, other: Iterable[T]) -> 'KotList[T]':
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
         result = list(self._elements)
         seen = set(self._elements)
-        for element in other:
+        
+        if isinstance(other, KotSet):
+            iter_other = other
+        elif isinstance(other, KotMap):
+            iter_other = other.values
+        else:
+            iter_other = other
+            
+        for element in iter_other:
             if element not in seen:
                 result.append(element)
                 seen.add(element)
         return KotList(result)
 
     def plus(self, element: Union[T, Iterable[T]]) -> 'KotList[T]':
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
         if isinstance(element, Iterable) and not isinstance(element, (str, bytes)):
-            return KotList(self._elements + list(element))
+            if isinstance(element, KotSet):
+                return KotList(self._elements + list(element))
+            elif isinstance(element, KotMap):
+                return KotList(self._elements + list(element.values))
+            else:
+                return KotList(self._elements + list(element))
         else:
             return KotList(self._elements + [element])
 
     def minus(self, element: Union[T, Iterable[T]]) -> 'KotList[T]':
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
         if isinstance(element, Iterable) and not isinstance(element, (str, bytes)):
-            to_remove = set(element)
+            if isinstance(element, KotSet):
+                to_remove = set(element)
+            elif isinstance(element, KotMap):
+                to_remove = set(element.values)
+            else:
+                to_remove = set(element)
             return KotList([e for e in self._elements if e not in to_remove])
         else:
             result = self._elements.copy()
@@ -534,10 +582,30 @@ class KotList(Generic[T]):
         return KotList(self._elements[from_index:to_index])
 
     def zip(self, other: Iterable[R]) -> 'KotList[Tuple[T, R]]':
-        return KotList(list(zip(self._elements, other)))
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
+        if isinstance(other, KotSet):
+            return KotList(list(zip(self._elements, other)))
+        elif isinstance(other, KotMap):
+            return KotList(list(zip(self._elements, other.values)))
+        else:
+            return KotList(list(zip(self._elements, other)))
 
     def zip_transform(self, other: Iterable[R], transform: Callable[[T, R], V]) -> 'KotList[V]':
-        return KotList([transform(a, b) for a, b in zip(self._elements, other)])
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
+        if isinstance(other, KotSet):
+            iter_other = other
+        elif isinstance(other, KotMap):
+            iter_other = other.values
+        else:
+            iter_other = other
+        
+        return KotList([transform(a, b) for a, b in zip(self._elements, iter_other)])
 
     def unzip(self) -> Tuple['KotList[Any]', 'KotList[Any]']:
         if self.is_empty():

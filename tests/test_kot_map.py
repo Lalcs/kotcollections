@@ -263,7 +263,9 @@ class TestKotMapTransformation(unittest.TestCase):
 
     def test_map(self):
         """Test map method."""
+        from kotcollections import KotList
         result = self.map.map(lambda k, v: f"{k}:{v}")
+        self.assertIsInstance(result, KotList)
         self.assertEqual(len(result), 3)
         self.assertIn("a:1", result)
         self.assertIn("b:2", result)
@@ -290,7 +292,9 @@ class TestKotMapTransformation(unittest.TestCase):
 
     def test_map_not_null_and_none(self):
         """Test map_not_null and map_not_none methods."""
+        from kotcollections import KotList
         result = self.map.map_not_null(lambda k, v: v if v > 1 else None)
+        self.assertIsInstance(result, KotList)
         self.assertEqual(len(result), 2)
         self.assertIn(2, result)
         self.assertIn(3, result)
@@ -302,7 +306,9 @@ class TestKotMapTransformation(unittest.TestCase):
 
     def test_flat_map(self):
         """Test flat_map method."""
+        from kotcollections import KotList
         result = self.map.flat_map(lambda k, v: [k, str(v)])
+        self.assertIsInstance(result, KotList)
         self.assertEqual(len(result), 6)
         self.assertIn("a", result)
         self.assertIn("b", result)

@@ -83,23 +83,23 @@ class TestCircularImports(unittest.TestCase):
     
     def test_kot_map_with_other_collections(self):
         """Test KotMap methods with other collection types."""
-        from kotcollections import KotMap
+        from kotcollections import KotMap, KotList, KotSet
         
         m = KotMap({1: 'a', 2: 'b', 3: 'c'})
         
-        # Test methods that return Python list
-        values_list = m.values  # values returns a Python list
-        self.assertIsInstance(values_list, list)
+        # Test methods that return KotList
+        values_list = m.values  # values returns a KotList
+        self.assertIsInstance(values_list, KotList)
         self.assertEqual(len(values_list), 3)
         
-        # Test methods that return Python set
-        keys_set = m.keys  # keys returns a Python set
-        self.assertIsInstance(keys_set, set)
+        # Test methods that return KotSet
+        keys_set = m.keys  # keys returns a KotSet
+        self.assertIsInstance(keys_set, KotSet)
         self.assertEqual(len(keys_set), 3)
         
         # Test entries property
-        entries = m.entries  # entries returns a Python set of tuples
-        self.assertIsInstance(entries, set)
+        entries = m.entries  # entries returns a KotSet of tuples
+        self.assertIsInstance(entries, KotSet)
         self.assertEqual(len(entries), 3)
         
         # Test to_list method
