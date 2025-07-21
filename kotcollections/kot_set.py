@@ -529,6 +529,7 @@ class KotSet(Generic[T]):
 
     def to_kot_list(self) -> 'KotList[T]':
         """Returns a Python list containing all elements."""
+        from kotcollections.kot_list import KotList
         return KotList(self._elements.copy())
 
     def to_kot_mutable_list(self) -> 'KotMutableList[T]':

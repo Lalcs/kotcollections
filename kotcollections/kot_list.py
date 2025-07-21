@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import bisect
 import random as _random
 from collections.abc import Iterable
@@ -12,8 +14,8 @@ V = TypeVar('V')
 if TYPE_CHECKING:
     from kotcollections.kot_map import KotMap
     from kotcollections.kot_mutable_list import KotMutableList
-    from kotcollections.kot_mutable_set import KotMutableSet
     from kotcollections.kot_set import KotSet
+    from kotcollections.kot_mutable_set import KotMutableSet
 
 
 class KotList(Generic[T]):

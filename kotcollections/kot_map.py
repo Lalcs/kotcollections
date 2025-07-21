@@ -4,9 +4,10 @@ KotMap: A Python implementation of Kotlin's Map interface with snake_case naming
 
 from __future__ import annotations
 
-from typing import TypeVar, Generic, Callable, Optional, Dict, Iterator, Any, Tuple, List, Set
+from typing import TypeVar, Generic, Callable, Optional, Dict, Iterator, Any, Tuple, List, Set, TYPE_CHECKING
 
-from kotcollections import KotMutableMap
+if TYPE_CHECKING:
+    from kotcollections import KotMutableMap
 
 K = TypeVar('K')
 V = TypeVar('V')

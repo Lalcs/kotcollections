@@ -314,7 +314,7 @@ class TestKotMutableSetConversion(unittest.TestCase):
     def test_to_kot_set(self):
         """Test conversion to immutable KotSet."""
         ms = KotMutableSet([1, 2, 3])
-        s = ms.to_set()
+        s = ms.to_kot_set()
 
         # Check it's a KotSet
         self.assertIsInstance(s, KotSet)

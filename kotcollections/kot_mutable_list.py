@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 from functools import cmp_to_key
 from typing import TypeVar, Optional, Callable, Iterable, List

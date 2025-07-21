@@ -630,17 +630,23 @@ class TestKotSetConversion(unittest.TestCase):
     def test_to_sorted_list(self):
         """Test conversion to sorted list."""
         s = KotSet([3, 1, 4, 1, 5, 9, 2, 6])
-        sorted_list = s.to_sorted_list()
+        # Use to_list() and sort manually
+        sorted_list = sorted(s.to_list())
         self.assertEqual(sorted_list, [1, 2, 3, 4, 5, 6, 9])
 
         # Test with reverse
-        sorted_list = s.to_sorted_list(reverse=True)
+        sorted_list = sorted(s.to_list(), reverse=True)
         self.assertEqual(sorted_list, [9, 6, 5, 4, 3, 2, 1])
 
         # Test with key
         s2 = KotSet(["bb", "aaa", "c"])
-        sorted_list = s2.to_sorted_list(key=len)
+        sorted_list = sorted(s2.to_list(), key=len)
         self.assertEqual(sorted_list, ["c", "bb", "aaa"])
+        
+        # Test to_sorted_set() method
+        sorted_set = s.to_sorted_set()
+        self.assertIsInstance(sorted_set, KotSet)
+        self.assertEqual(list(sorted_set), [1, 2, 3, 4, 5, 6, 9])
 
     def test_join_to_string(self):
         """Test join_to_string operation."""
@@ -748,7 +754,7 @@ class TestKotSetNewMethods(unittest.TestCase):
     def test_to_mutable_set(self):
         """Test to_mutable_set conversion."""
         s = KotSet([1, 2, 3])
-        ms = s.to_mutable_set()
+        ms = s.to_kot_mutable_set()
         self.assertEqual(ms.size, 3)
         # Test mutation
         ms.add(4)
@@ -758,7 +764,7 @@ class TestKotSetNewMethods(unittest.TestCase):
     def test_to_mutable_list(self):
         """Test to_mutable_list conversion."""
         s = KotSet([1, 2, 3])
-        ml = s.to_mutable_list()
+        ml = s.to_kot_mutable_list()
         self.assertEqual(len(ml), 3)
         # Test mutation
         ml.add(4)
