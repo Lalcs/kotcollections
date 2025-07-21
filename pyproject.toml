@@ -30,6 +30,6 @@ format-jinja = """
     {%- if distance == 0 -%}
         {{ serialize_pep440(base, stage, revision) }}
     {%- else -%}
-        {{ '0.0.0+unknown' }}
+        {{ '0.0.0' }}
     {%- endif -%}
 """
