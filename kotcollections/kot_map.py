@@ -247,6 +247,7 @@ class KotMap(Generic[K, V]):
 
     def to_kot_mutable_map(self) -> 'KotMutableMap[K, V]':
         """Returns a KotMutableMap containing all key-value pairs."""
+        from kotcollections.kot_mutable_map import KotMutableMap
         return KotMutableMap(self._elements.copy())
 
     # Action operations

@@ -52,7 +52,7 @@ class KotList(Generic[T]):
             if isinstance(element, KotList):
                 if self._element_type != KotList:
                     raise TypeError(f"Cannot add KotList to KotList[{self._element_type.__name__}]")
-            elif type(element) != self._element_type:
+            elif not isinstance(element, self._element_type):
                 raise TypeError(
                     f"Cannot add element of type '{type(element).__name__}' to KotList[{self._element_type.__name__}]"
                 )

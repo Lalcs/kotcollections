@@ -1016,3 +1016,122 @@ class TestKotSetWithKotList(unittest.TestCase):
             self.assertEqual(len(pair), 2)
             self.assertIsInstance(pair[0], int)
             self.assertIsInstance(pair[1], str)
+
+
+class TestKotSetInheritanceTypeChecking(unittest.TestCase):
+    """Test type checking with inheritance relationships for KotSet."""
+    
+    def setUp(self):
+        """Set up test classes with inheritance."""
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+            def __hash__(self):
+                return hash(self.name)
+            def __eq__(self, other):
+                return isinstance(other, Animal) and self.name == other.name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        self.Animal = Animal
+        self.Dog = Dog
+        self.Cat = Cat
+    
+    def test_parent_type_accepts_subclass_elements(self):
+        """Test that parent type set accepts subclass elements."""
+        # Create set with parent type element
+        animal_set = KotSet([self.Animal("Generic")])
+        mutable_set = animal_set.to_kot_mutable_set()
+        
+        # Should work - adding Dog to Animal set
+        mutable_set.add(self.Dog("Buddy"))
+        self.assertEqual(mutable_set.size, 2)
+        # Check both elements are in the set
+        self.assertTrue(any(isinstance(elem, self.Animal) and elem.name == "Generic" for elem in mutable_set))
+        self.assertTrue(any(isinstance(elem, self.Dog) and elem.name == "Buddy" for elem in mutable_set))
+        
+        # Should also work - adding Cat to Animal set
+        mutable_set.add(self.Cat("Whiskers"))
+        self.assertEqual(mutable_set.size, 3)
+        self.assertTrue(any(isinstance(elem, self.Cat) and elem.name == "Whiskers" for elem in mutable_set))
+    
+    def test_subclass_type_rejects_parent_elements(self):
+        """Test that subclass type set rejects parent class elements."""
+        # Create set with subclass type element
+        dog_set = KotSet([self.Dog("Buddy")])
+        mutable_set = dog_set.to_kot_mutable_set()
+        
+        # Should fail - adding Animal to Dog set
+        with self.assertRaises(TypeError) as cm:
+            mutable_set.add(self.Animal("Generic"))
+        self.assertIn("All elements must be of type Dog, got Animal", str(cm.exception))
+    
+    def test_different_subclasses_cannot_mix(self):
+        """Test that different subclasses cannot be mixed."""
+        # Create set with Dog type element
+        dog_set = KotSet([self.Dog("Buddy")])
+        mutable_set = dog_set.to_kot_mutable_set()
+        
+        # Should fail - adding Cat to Dog set
+        with self.assertRaises(TypeError) as cm:
+            mutable_set.add(self.Cat("Whiskers"))
+        self.assertIn("All elements must be of type Dog, got Cat", str(cm.exception))
+    
+    def test_initialization_with_mixed_types(self):
+        """Test initialization with mixed parent/subclass types."""
+        # Should work when parent comes first (list preserves order)
+        mixed_set = KotSet([self.Animal("Generic"), self.Dog("Buddy")])
+        self.assertEqual(mixed_set.size, 2)
+        self.assertTrue(any(isinstance(elem, self.Animal) and elem.name == "Generic" for elem in mixed_set))
+        self.assertTrue(any(isinstance(elem, self.Dog) and elem.name == "Buddy" for elem in mixed_set))
+        
+        # Should fail when subclass comes first
+        with self.assertRaises(TypeError) as cm:
+            KotSet([self.Dog("Buddy"), self.Animal("Generic")])
+        self.assertIn("All elements must be of type Dog, got Animal", str(cm.exception))
+    
+    def test_set_operations_with_inheritance(self):
+        """Test set operations (union, intersect) with inheritance."""
+        # Test 1: Union with parent type as base - should work
+        animal_set = KotSet([self.Animal("Generic1")])
+        dog_set_for_union = KotSet([self.Dog("Buddy")])
+        
+        # Convert dog set to mutable set and add to animal set
+        # This ensures Animal type is preserved
+        animal_mutable = animal_set.to_kot_mutable_set()
+        for elem in dog_set_for_union:
+            animal_mutable.add(elem)
+        self.assertEqual(animal_mutable.size, 2)
+        
+        # Test 2: Direct union of incompatible types should fail
+        dog_set = KotSet([self.Dog("Buddy")])
+        cat_set = KotSet([self.Cat("Whiskers")])
+        
+        # Since union creates a new set and Python's set.union doesn't preserve order,
+        # the type check might fail depending on which element comes first
+        # We'll use a different approach to test this
+        dog_mutable = dog_set.to_kot_mutable_set()
+        with self.assertRaises(TypeError) as cm:
+            for elem in cat_set:
+                dog_mutable.add(elem)
+        self.assertIn("All elements must be of type Dog, got Cat", str(cm.exception))
+    
+    def test_none_handling_with_inheritance(self):
+        """Test that None values are handled correctly with inheritance."""
+        # Create set with parent type and None
+        animal_set = KotSet([self.Animal("Generic"), None])
+        self.assertEqual(animal_set.size, 2)
+        self.assertTrue(None in animal_set)
+        
+        # Should still be able to add subclass
+        mutable_set = animal_set.to_kot_mutable_set()
+        mutable_set.add(self.Dog("Buddy"))
+        self.assertEqual(mutable_set.size, 3)
+
+
+if __name__ == '__main__':
+    unittest.main()

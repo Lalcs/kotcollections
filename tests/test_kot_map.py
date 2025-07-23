@@ -5,6 +5,7 @@ Unit tests for KotMap class.
 import unittest
 
 from kotcollections.kot_map import KotMap
+from kotcollections.kot_mutable_map import KotMutableMap
 
 
 class TestKotMapBasics(unittest.TestCase):
@@ -684,6 +685,112 @@ class TestKotMapNewMethods(unittest.TestCase):
         # Test get_or_else - should always use the map's default function, not the provided one
         self.assertEqual(m_str_default.get_or_else("key4", lambda: "should_not_be_used"), "default_key4")
         self.assertEqual(m_str_default.get_or_else("key1", lambda: "should_not_be_used"), "value1")
+
+
+class TestKotMapInheritanceTypeChecking(unittest.TestCase):
+    """Test type checking with inheritance relationships for KotMap."""
+    
+    def setUp(self):
+        """Set up test classes with inheritance."""
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        self.Animal = Animal
+        self.Dog = Dog
+        self.Cat = Cat
+    
+    def test_parent_type_accepts_subclass_values(self):
+        """Test that parent type map accepts subclass values."""
+        # Create map with parent type value
+        animal_map = KotMap({"animal1": self.Animal("Generic")})
+        mutable_map = animal_map.to_kot_mutable_map()
+        
+        # Should work - adding Dog to Animal map
+        mutable_map.put("dog1", self.Dog("Buddy"))
+        self.assertEqual(mutable_map.size, 2)
+        self.assertIsInstance(mutable_map.get("animal1"), self.Animal)
+        self.assertIsInstance(mutable_map.get("dog1"), self.Dog)
+        
+        # Should also work - adding Cat to Animal map
+        mutable_map.put("cat1", self.Cat("Whiskers"))
+        self.assertEqual(mutable_map.size, 3)
+        self.assertIsInstance(mutable_map.get("cat1"), self.Cat)
+    
+    def test_subclass_type_rejects_parent_values(self):
+        """Test that subclass type map rejects parent class values."""
+        # Create map with subclass type value
+        dog_map = KotMap({"dog1": self.Dog("Buddy")})
+        mutable_map = dog_map.to_kot_mutable_map()
+        
+        # Should fail - adding Animal to Dog map
+        with self.assertRaises(TypeError) as cm:
+            mutable_map.put("animal1", self.Animal("Generic"))
+        self.assertIn("All values must be of type Dog, got Animal", str(cm.exception))
+    
+    def test_different_subclasses_cannot_mix(self):
+        """Test that different subclasses cannot be mixed."""
+        # Create map with Dog type value
+        dog_map = KotMap({"dog1": self.Dog("Buddy")})
+        mutable_map = dog_map.to_kot_mutable_map()
+        
+        # Should fail - adding Cat to Dog map
+        with self.assertRaises(TypeError) as cm:
+            mutable_map.put("cat1", self.Cat("Whiskers"))
+        self.assertIn("All values must be of type Dog, got Cat", str(cm.exception))
+    
+    def test_initialization_with_mixed_types(self):
+        """Test initialization with mixed parent/subclass types."""
+        # Should work when parent comes first
+        mixed_map = KotMap({
+            "animal1": self.Animal("Generic"),
+            "dog1": self.Dog("Buddy")
+        })
+        self.assertEqual(mixed_map.size, 2)
+        self.assertIsInstance(mixed_map.get("animal1"), self.Animal)
+        self.assertIsInstance(mixed_map.get("dog1"), self.Dog)
+        
+        # Should fail when subclass comes first
+        with self.assertRaises(TypeError) as cm:
+            KotMap({
+                "dog1": self.Dog("Buddy"),
+                "animal1": self.Animal("Generic")
+            })
+        # Note: dict ordering is preserved in Python 3.7+
+        self.assertIn("All values must be of type Dog, got Animal", str(cm.exception))
+    
+    def test_key_type_inheritance(self):
+        """Test that key type checking also works with inheritance."""
+        # Using custom classes as keys (they need to be hashable)
+        class HashableAnimal:
+            def __init__(self, name):
+                self.name = name
+            def __hash__(self):
+                return hash(self.name)
+            def __eq__(self, other):
+                return isinstance(other, HashableAnimal) and self.name == other.name
+        
+        class HashableDog(HashableAnimal):
+            pass
+        
+        # Parent type keys accept subclass keys
+        animal_key_map = KotMap({HashableAnimal("Generic"): "value1"})
+        mutable_map = animal_key_map.to_kot_mutable_map()
+        mutable_map.put(HashableDog("Buddy"), "value2")
+        self.assertEqual(mutable_map.size, 2)
+        
+        # Subclass type keys reject parent keys
+        dog_key_map = KotMap({HashableDog("Buddy"): "value1"})
+        mutable_map2 = dog_key_map.to_kot_mutable_map()
+        with self.assertRaises(TypeError) as cm:
+            mutable_map2.put(HashableAnimal("Generic"), "value2")
+        self.assertIn("All keys must be of type HashableDog, got HashableAnimal", str(cm.exception))
 
 
 if __name__ == '__main__':

@@ -1071,6 +1071,51 @@ class TestKotListTypeChecking(unittest.TestCase):
         lst2 = KotList([True, False, True])
         flattened2 = lst2.flatten()
         self.assertEqual(flattened2.to_list(), [True, False, True])
+    
+    def test_inheritance_type_checking(self):
+        """Test type checking with inheritance relationships"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        # Test 1: Parent type collection accepts subclass elements
+        animal_list = KotList([Animal("Generic")])
+        # Should work - adding Dog to Animal list
+        animal_list_mutable = animal_list.to_kot_mutable_list()
+        animal_list_mutable.add(Dog("Buddy"))
+        self.assertEqual(len(animal_list_mutable), 2)
+        self.assertIsInstance(animal_list_mutable[0], Animal)
+        self.assertIsInstance(animal_list_mutable[1], Dog)
+        
+        # Test 2: Subclass type collection rejects parent class elements
+        dog_list = KotList([Dog("Buddy")])
+        dog_list_mutable = dog_list.to_kot_mutable_list()
+        with self.assertRaises(TypeError) as cm:
+            dog_list_mutable.add(Animal("Generic"))
+        self.assertIn("Cannot add element of type 'Animal' to KotList[Dog]", str(cm.exception))
+        
+        # Test 3: Different subclasses cannot be mixed
+        with self.assertRaises(TypeError) as cm:
+            dog_list_mutable.add(Cat("Whiskers"))
+        self.assertIn("Cannot add element of type 'Cat' to KotList[Dog]", str(cm.exception))
+        
+        # Test 4: Initialization with mixed parent/subclass fails when subclass comes first
+        with self.assertRaises(TypeError) as cm:
+            KotList([Dog("Buddy"), Animal("Generic")])
+        self.assertIn("Cannot add element of type 'Animal' to KotList[Dog]", str(cm.exception))
+        
+        # Test 5: Initialization with mixed parent/subclass works when parent comes first
+        mixed_list = KotList([Animal("Generic"), Dog("Buddy")])
+        self.assertEqual(len(mixed_list), 2)
+        self.assertIsInstance(mixed_list[0], Animal)
+        self.assertIsInstance(mixed_list[1], Dog)
 
 
 class TestKotListNewElementRetrieval(unittest.TestCase):

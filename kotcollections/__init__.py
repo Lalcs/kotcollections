@@ -1,9 +1,9 @@
 from .kot_list import KotList
-from .kot_mutable_list import KotMutableList
-from .kot_set import KotSet
-from .kot_mutable_set import KotMutableSet
 from .kot_map import KotMap, KotMapWithDefault
+from .kot_mutable_list import KotMutableList
 from .kot_mutable_map import KotMutableMap
+from .kot_mutable_set import KotMutableSet
+from .kot_set import KotSet
 
 __all__ = ['KotList', 'KotMutableList', 'KotSet', 'KotMutableSet', 'KotMap', 'KotMutableMap', 'KotMapWithDefault']
 
@@ -12,4 +12,4 @@ try:
     from ._version import __version__
 except ImportError:
     # Fallback for development
-    __version__ = '0.0.0+unknown'
+    __version__ = '0.0.0'
