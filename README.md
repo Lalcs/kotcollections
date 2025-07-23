@@ -5,7 +5,7 @@
 [![image](https://img.shields.io/pypi/pyversions/kotcollections.svg)](https://pypi.org/project/kotcollections/)
 [![image](https://img.shields.io/github/contributors/lalcs/kotcollections.svg)](https://github.com/lalcs/kotcollections/graphs/contributors)
 [![image](https://img.shields.io/pypi/dm/kotcollections)](https://pypistats.org/packages/kotcollections)
-![Unittest](https://github.com/Lalcs/kotcollections/workflows/Unittest/badge.svg)
+![Unittest](https://github.com/Lalcs/kotcollections/workflows/unittest/badge.svg)
 
 kotcollections is a Python library that fully reproduces Kotlin's Collections interfaces. It brings Kotlin's rich
 collection operations to Python developers with List, Set, and Map implementations.
