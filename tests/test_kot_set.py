@@ -1213,6 +1213,46 @@ class TestKotSetTypeSpecification(unittest.TestCase):
         mutable_animals2 = animals2.to_kot_mutable_set()
         with self.assertRaises(TypeError):
             mutable_animals2.add(NotAnimal())
+    
+    def test_type_preservation_in_conversions(self):
+        """Test that type information is preserved during conversions"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+            def __hash__(self):
+                return hash(self.name)
+            def __eq__(self, other):
+                return isinstance(other, Animal) and self.name == other.name
+        
+        class Dog(Animal):
+            pass
+        
+        # Test KotSet type preservation
+        animals = KotSet.of_type(Animal, [Dog("Buddy")])
+        self.assertEqual(animals._element_type, Animal)
+        
+        # Test to_kot_set preserves type
+        copied = animals.to_kot_set()
+        self.assertEqual(copied._element_type, Animal)
+        
+        # Test to_kot_mutable_set preserves type
+        mutable = animals.to_kot_mutable_set()
+        self.assertEqual(mutable._element_type, Animal)
+        # Verify we can still add correct types
+        mutable.add(Dog("Max"))
+        self.assertEqual(mutable.size, 2)
+        
+        # Test to_kot_list preserves type
+        kot_list = animals.to_kot_list()
+        self.assertEqual(kot_list._element_type, Animal)
+        
+        # Test to_kot_mutable_list preserves type
+        mutable_list = animals.to_kot_mutable_list()
+        self.assertEqual(mutable_list._element_type, Animal)
+        # Verify we can still add correct types
+        mutable_list.add(Dog("Rex"))
+        self.assertEqual(len(mutable_list), 2)
 
 
 if __name__ == '__main__':

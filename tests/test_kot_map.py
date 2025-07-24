@@ -865,6 +865,34 @@ class TestKotMapTypeSpecification(unittest.TestCase):
         mutable_animals2 = animals2.to_kot_mutable_map()
         with self.assertRaises(TypeError):
             mutable_animals2.put("Invalid", NotAnimal())
+    
+    def test_type_preservation_in_conversions(self):
+        """Test that type information is preserved during conversions"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        class Dog(Animal):
+            pass
+        
+        # Test KotMap type preservation
+        animal_map = KotMap.of_type(str, Animal, {"dog1": Dog("Buddy")})
+        self.assertEqual(animal_map._key_type, str)
+        self.assertEqual(animal_map._value_type, Animal)
+        
+        # Test to_kot_map preserves types
+        copied = animal_map.to_kot_map()
+        self.assertEqual(copied._key_type, str)
+        self.assertEqual(copied._value_type, Animal)
+        
+        # Test to_kot_mutable_map preserves types
+        mutable = animal_map.to_kot_mutable_map()
+        self.assertEqual(mutable._key_type, str)
+        self.assertEqual(mutable._value_type, Animal)
+        # Verify we can still add correct types
+        mutable.put("dog2", Dog("Max"))
+        self.assertEqual(len(mutable), 2)
 
 
 if __name__ == '__main__':

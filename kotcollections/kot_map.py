@@ -324,7 +324,11 @@ class KotMap(Generic[K, V]):
 
     def to_kot_map(self) -> 'KotMap[K, V]':
         """Returns a KotMap containing all key-value pairs."""
-        return KotMap(self._elements.copy())
+        # Preserve type information when converting
+        if self._key_type is not None and self._value_type is not None:
+            return KotMap.of_type(self._key_type, self._value_type, self._elements.copy())
+        else:
+            return KotMap(self._elements.copy())
 
     def to_kot_mutable_map(self) -> 'KotMutableMap[K, V]':
         """Returns a KotMutableMap containing all key-value pairs."""

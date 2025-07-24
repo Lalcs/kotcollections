@@ -612,16 +612,28 @@ class KotSet(Generic[T]):
     def to_kot_list(self) -> 'KotList[T]':
         """Returns a Python list containing all elements."""
         from kotcollections.kot_list import KotList
-        return KotList(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            return KotList.of_type(self._element_type, list(self._elements))
+        else:
+            return KotList(self._elements.copy())
 
     def to_kot_mutable_list(self) -> 'KotMutableList[T]':
         """Returns a Python list containing all elements."""
         from kotcollections.kot_mutable_list import KotMutableList
-        return KotMutableList(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            return KotMutableList.of_type(self._element_type, list(self._elements))
+        else:
+            return KotMutableList(self._elements.copy())
 
     def to_kot_set(self) -> KotSet[T]:
         """Returns a Python set containing all elements."""
-        return KotSet(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            return KotSet.of_type(self._element_type, self._elements.copy())
+        else:
+            return KotSet(self._elements.copy())
 
     def to_kot_mutable_set(self) -> 'KotMutableSet[T]':
         """Returns a KotMutableSet containing all elements."""

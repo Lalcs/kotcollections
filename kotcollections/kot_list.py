@@ -722,7 +722,11 @@ class KotList(Generic[T]):
         return set(self._elements.copy())
 
     def to_kot_list(self) -> 'KotList[T]':
-        return KotList(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            return KotList.of_type(self._element_type, self._elements.copy())
+        else:
+            return KotList(self._elements.copy())
 
     def to_kot_mutable_list(self) -> 'KotMutableList[T]':
         from kotcollections.kot_mutable_list import KotMutableList
@@ -735,11 +739,19 @@ class KotList(Generic[T]):
 
     def to_kot_set(self) -> 'KotSet[T]':
         from kotcollections.kot_set import KotSet
-        return KotSet(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            return KotSet.of_type(self._element_type, self._elements.copy())
+        else:
+            return KotSet(self._elements.copy())
 
     def to_kot_mutable_set(self) -> 'KotMutableSet[T]':
         from kotcollections.kot_mutable_set import KotMutableSet
-        return KotMutableSet(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            return KotMutableSet.of_type(self._element_type, self._elements.copy())
+        else:
+            return KotMutableSet(self._elements.copy())
 
     def join_to_string(
         self, separator: str = ", ", prefix: str = "", postfix: str = "",
