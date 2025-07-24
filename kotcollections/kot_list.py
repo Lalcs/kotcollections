@@ -4,7 +4,7 @@ import bisect
 import random as _random
 from collections.abc import Iterable
 from functools import reduce, cmp_to_key
-from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Dict, Union, TYPE_CHECKING, Set
+from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Dict, Union, TYPE_CHECKING, Set, Type
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -39,8 +39,73 @@ class KotList(Generic[T]):
 
             self._elements = elements_list
 
+    @classmethod
+    def __class_getitem__(cls, element_type: Type[T]) -> Type['KotList[T]']:
+        """Enable KotList[Type]() syntax for type specification.
+        
+        Example:
+            animals = KotList[Animal]()
+            animals_mutable = animals.to_kot_mutable_list()
+            animals_mutable.add(Dog("Buddy"))
+            animals_mutable.add(Cat("Whiskers"))
+        """
+        class TypedKotList(cls):
+            def __init__(self, elements=None):
+                # Only set element type if it's an actual type, not a type variable
+                if isinstance(element_type, type):
+                    self._element_type = element_type
+                else:
+                    self._element_type = None
+                self._elements = []
+                # Now process elements with the correct type set
+                if elements is not None:
+                    for elem in elements:
+                        self._check_type(elem)
+                        self._elements.append(elem)
+        
+        # Set a meaningful name for debugging
+        TypedKotList.__name__ = f"{cls.__name__}[{element_type.__name__}]"
+        TypedKotList.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
+        
+        return TypedKotList
+
+    @classmethod
+    def of_type(cls, element_type: Type[T], elements: Optional[Iterable[T]] = None) -> 'KotList[T]':
+        """Create a KotList with a specific element type.
+        
+        This is useful when you want to create a list of a parent type
+        but only have instances of child types.
+        
+        Args:
+            element_type: The type of elements this list will contain
+            elements: Optional initial elements
+            
+        Returns:
+            A new KotList instance with the specified element type
+            
+        Example:
+            animals = KotList.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
+            # or empty list
+            animals = KotList.of_type(Animal)
+        """
+        instance = cls.__new__(cls)
+        instance._element_type = element_type
+        instance._elements = []
+        
+        # Initialize with elements if provided
+        if elements is not None:
+            for elem in elements:
+                instance._check_type(elem)
+                instance._elements.append(elem)
+                
+        return instance
+
     def _check_type(self, element: Any) -> None:
         """Check if the element has the correct type for this list."""
+        # Skip type checking if element_type is a type variable or not a real type
+        if self._element_type is not None and not isinstance(self._element_type, type):
+            return
+            
         if self._element_type is None:
             # First element sets the type
             if isinstance(element, KotList):
@@ -51,7 +116,8 @@ class KotList(Generic[T]):
             # Type check: allow T type or KotList type
             if isinstance(element, KotList):
                 if self._element_type != KotList:
-                    raise TypeError(f"Cannot add KotList to KotList[{self._element_type.__name__}]")
+                    type_name = getattr(self._element_type, '__name__', str(self._element_type))
+                    raise TypeError(f"Cannot add KotList to KotList[{type_name}]")
             elif not isinstance(element, self._element_type):
                 raise TypeError(
                     f"Cannot add element of type '{type(element).__name__}' to KotList[{self._element_type.__name__}]"
@@ -660,7 +726,12 @@ class KotList(Generic[T]):
 
     def to_kot_mutable_list(self) -> 'KotMutableList[T]':
         from kotcollections.kot_mutable_list import KotMutableList
-        return KotMutableList(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            mutable_list = KotMutableList.of_type(self._element_type, self._elements.copy())
+        else:
+            mutable_list = KotMutableList(self._elements.copy())
+        return mutable_list
 
     def to_kot_set(self) -> 'KotSet[T]':
         from kotcollections.kot_set import KotSet

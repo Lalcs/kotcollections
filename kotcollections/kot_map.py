@@ -4,7 +4,7 @@ KotMap: A Python implementation of Kotlin's Map interface with snake_case naming
 
 from __future__ import annotations
 
-from typing import TypeVar, Generic, Callable, Optional, Dict, Iterator, Any, Tuple, List, Set, TYPE_CHECKING
+from typing import TypeVar, Generic, Callable, Optional, Dict, Iterator, Any, Tuple, List, Set, Type, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from kotcollections import KotMutableMap, KotList, KotSet
@@ -42,8 +42,89 @@ class KotMap(Generic[K, V]):
                 for key, value in elements:
                     self._put_with_type_check(key, value)
 
+    @classmethod
+    def __class_getitem__(cls, types: Tuple[Type[K], Type[V]]) -> Type['KotMap[K, V]']:
+        """Enable KotMap[KeyType, ValueType]() syntax for type specification.
+        
+        Example:
+            animals_by_name = KotMap[str, Animal]()
+            animals_by_name.put("Buddy", Dog("Buddy"))
+            animals_by_name.put("Whiskers", Cat("Whiskers"))
+        """
+        key_type, value_type = types
+        
+        class TypedKotMap(cls):
+            def __init__(self, elements=None):
+                # Only set types if they are actual types, not type variables
+                self._elements = {}
+                self._key_type = key_type if isinstance(key_type, type) else None
+                self._value_type = value_type if isinstance(value_type, type) else None
+                # Now process elements with the correct types set
+                if elements is not None:
+                    if isinstance(elements, dict):
+                        for key, value in elements.items():
+                            self._put_with_type_check(key, value)
+                    elif isinstance(elements, list):
+                        for key, value in elements:
+                            self._put_with_type_check(key, value)
+                    else:  # Iterator
+                        for key, value in elements:
+                            self._put_with_type_check(key, value)
+        
+        # Set a meaningful name for debugging
+        TypedKotMap.__name__ = f"{cls.__name__}[{key_type.__name__}, {value_type.__name__}]"
+        TypedKotMap.__qualname__ = f"{cls.__qualname__}[{key_type.__name__}, {value_type.__name__}]"
+        
+        return TypedKotMap
+
+    @classmethod
+    def of_type(cls, key_type: Type[K], value_type: Type[V], elements: Optional[Dict[K, V] | List[Tuple[K, V]] | Iterator[Tuple[K, V]]] = None) -> 'KotMap[K, V]':
+        """Create a KotMap with specific key and value types.
+        
+        This is useful when you want to create a map with parent types
+        but only have instances of child types.
+        
+        Args:
+            key_type: The type of keys this map will contain
+            value_type: The type of values this map will contain
+            elements: Optional initial elements
+            
+        Returns:
+            A new KotMap instance with the specified types
+            
+        Example:
+            animals_by_name = KotMap.of_type(str, Animal, [("Buddy", Dog("Buddy")), ("Whiskers", Cat("Whiskers"))])
+            # or empty map
+            animals_by_name = KotMap.of_type(str, Animal)
+            animals_by_name.put("Max", Dog("Max"))
+        """
+        instance = cls.__new__(cls)
+        instance._elements = {}
+        instance._key_type = key_type
+        instance._value_type = value_type
+        
+        # Initialize with elements if provided
+        if elements is not None:
+            if isinstance(elements, dict):
+                for key, value in elements.items():
+                    instance._put_with_type_check(key, value)
+            elif isinstance(elements, list):
+                for key, value in elements:
+                    instance._put_with_type_check(key, value)
+            else:  # Iterator
+                for key, value in elements:
+                    instance._put_with_type_check(key, value)
+                    
+        return instance
+
     def _put_with_type_check(self, key: K, value: V) -> None:
         """Add a key-value pair with type checking."""
+        # Skip type checking if key_type or value_type is a type variable or not a real type
+        if (self._key_type is not None and not isinstance(self._key_type, type)) or \
+           (self._value_type is not None and not isinstance(self._value_type, type)):
+            self._elements[key] = value
+            return
+            
         # Set key type
         if self._key_type is None and key is not None:
             self._key_type = type(key) if not isinstance(key, KotMap) else KotMap
@@ -248,7 +329,12 @@ class KotMap(Generic[K, V]):
     def to_kot_mutable_map(self) -> 'KotMutableMap[K, V]':
         """Returns a KotMutableMap containing all key-value pairs."""
         from kotcollections.kot_mutable_map import KotMutableMap
-        return KotMutableMap(self._elements.copy())
+        # Preserve type information when converting
+        if self._key_type is not None and self._value_type is not None:
+            mutable_map = KotMutableMap.of_type(self._key_type, self._value_type, self._elements.copy())
+        else:
+            mutable_map = KotMutableMap(self._elements.copy())
+        return mutable_map
 
     # Action operations
 

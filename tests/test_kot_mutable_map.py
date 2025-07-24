@@ -458,5 +458,80 @@ class TestKotMutableMapEdgeCases(unittest.TestCase):
         self.assertFalse(m.contains_key("d"))
 
 
+class TestKotMutableMapTypeSpecification(unittest.TestCase):
+    def test_class_getitem_syntax(self):
+        """Test __class_getitem__ for type specification"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        # Test creating typed KotMutableMap with parent types
+        animals_by_name = KotMutableMap[str, Animal]()
+        self.assertEqual(len(animals_by_name), 0)
+        
+        # Add different subclass instances
+        animals_by_name.put("Buddy", Dog("Buddy"))
+        animals_by_name.put("Whiskers", Cat("Whiskers"))
+        self.assertEqual(len(animals_by_name), 2)
+        
+        # Test with initial elements
+        animals2 = KotMutableMap[str, Animal]([("Max", Dog("Max")), ("Luna", Cat("Luna"))])
+        self.assertEqual(len(animals2), 2)
+        self.assertIsInstance(animals2.get("Max"), Dog)
+        self.assertIsInstance(animals2.get("Luna"), Cat)
+        
+        # Add more animals
+        animals2.put("Rex", Dog("Rex"))
+        self.assertEqual(len(animals2), 3)
+    
+    def test_of_type_method(self):
+        """Test of_type class method for type specification"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        # Test creating empty typed KotMutableMap
+        animals_by_name = KotMutableMap.of_type(str, Animal)
+        self.assertEqual(len(animals_by_name), 0)
+        
+        # Add different subclass instances
+        animals_by_name.put("Buddy", Dog("Buddy"))
+        animals_by_name.put("Whiskers", Cat("Whiskers"))
+        self.assertEqual(len(animals_by_name), 2)
+        
+        # Test with initial elements (list of tuples)
+        animals2 = KotMutableMap.of_type(str, Animal, [("Max", Dog("Max")), ("Luna", Cat("Luna"))])
+        self.assertEqual(len(animals2), 2)
+        self.assertIsInstance(animals2.get("Max"), Dog)
+        self.assertIsInstance(animals2.get("Luna"), Cat)
+        
+        # Test with initial elements (dict)
+        animals3 = KotMutableMap.of_type(str, Animal, {"Rex": Dog("Rex"), "Mittens": Cat("Mittens")})
+        self.assertEqual(len(animals3), 2)
+        self.assertIsInstance(animals3.get("Rex"), Dog)
+        self.assertIsInstance(animals3.get("Mittens"), Cat)
+        
+        # Test type checking is enforced
+        class NotAnimal:
+            pass
+        
+        with self.assertRaises(TypeError):
+            animals3.put("Invalid", NotAnimal())
+
+
 if __name__ == '__main__':
     unittest.main()

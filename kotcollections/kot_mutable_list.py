@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from functools import cmp_to_key
-from typing import TypeVar, Optional, Callable, Iterable, List
+from typing import TypeVar, Optional, Callable, Iterable, List, Type
 
 from kotcollections.kot_list import KotList
 
@@ -12,6 +12,67 @@ T = TypeVar('T')
 class KotMutableList(KotList[T]):
     def __init__(self, elements: Optional[Iterable[T]] = None):
         super().__init__(elements)
+
+    @classmethod
+    def __class_getitem__(cls, element_type: Type[T]) -> Type['KotMutableList[T]']:
+        """Enable KotMutableList[Type]() syntax for type specification.
+        
+        Example:
+            animals = KotMutableList[Animal]()
+            animals.add(Dog("Buddy"))
+            animals.add(Cat("Whiskers"))
+        """
+        class TypedKotMutableList(cls):
+            def __init__(self, elements=None):
+                # Only set element type if it's an actual type, not a type variable
+                if isinstance(element_type, type):
+                    self._element_type = element_type
+                else:
+                    self._element_type = None
+                self._elements = []
+                # Now process elements with the correct type set
+                if elements is not None:
+                    for elem in elements:
+                        self._check_type(elem)
+                        self._elements.append(elem)
+        
+        # Set a meaningful name for debugging
+        TypedKotMutableList.__name__ = f"{cls.__name__}[{element_type.__name__}]"
+        TypedKotMutableList.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
+        
+        return TypedKotMutableList
+
+    @classmethod
+    def of_type(cls, element_type: Type[T], elements: Optional[Iterable[T]] = None) -> 'KotMutableList[T]':
+        """Create a KotMutableList with a specific element type.
+        
+        This is useful when you want to create a mutable list of a parent type
+        but only have instances of child types.
+        
+        Args:
+            element_type: The type of elements this list will contain
+            elements: Optional initial elements
+            
+        Returns:
+            A new KotMutableList instance with the specified element type
+            
+        Example:
+            animals = KotMutableList.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
+            # or empty list
+            animals = KotMutableList.of_type(Animal)
+            animals.add(Dog("Max"))
+        """
+        instance = cls.__new__(cls)
+        instance._element_type = element_type
+        instance._elements = []
+        
+        # Initialize with elements if provided
+        if elements is not None:
+            for elem in elements:
+                instance._check_type(elem)
+                instance._elements.append(elem)
+                
+        return instance
 
     def __setitem__(self, index: int, value: T) -> None:
         self.set(index, value)

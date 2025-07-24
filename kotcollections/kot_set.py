@@ -50,8 +50,90 @@ class KotSet(Generic[T]):
                 for element in elements:
                     self._add_with_type_check(element)
 
+    @classmethod
+    def __class_getitem__(cls, element_type: Type[T]) -> Type['KotSet[T]']:
+        """Enable KotSet[Type]() syntax for type specification.
+        
+        Example:
+            animals = KotSet[Animal]()
+            animals.add(Dog("Buddy"))
+            animals.add(Cat("Whiskers"))
+        """
+        class TypedKotSet(cls):
+            def __init__(self, elements=None):
+                # Only set element type if it's an actual type, not a type variable
+                if isinstance(element_type, type):
+                    self._element_type = element_type
+                else:
+                    self._element_type = None
+                self._elements = set()
+                # Now process elements with the correct type set
+                if elements is not None:
+                    if hasattr(elements, '_elements') and hasattr(elements, 'to_list'):
+                        # It's a KotList or KotMutableList
+                        for element in elements:
+                            self._add_with_type_check(element)
+                    elif isinstance(elements, set):
+                        for element in elements:
+                            self._add_with_type_check(element)
+                    elif isinstance(elements, list):
+                        for element in elements:
+                            self._add_with_type_check(element)
+                    else:  # Iterator
+                        for element in elements:
+                            self._add_with_type_check(element)
+        
+        # Set a meaningful name for debugging
+        TypedKotSet.__name__ = f"{cls.__name__}[{element_type.__name__}]"
+        TypedKotSet.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
+        
+        return TypedKotSet
+
+    @classmethod
+    def of_type(cls, element_type: Type[T], elements: Optional[Set[T] | List[T] | Iterator[T]] = None) -> 'KotSet[T]':
+        """Create a KotSet with a specific element type.
+        
+        This is useful when you want to create a set of a parent type
+        but only have instances of child types.
+        
+        Args:
+            element_type: The type of elements this set will contain
+            elements: Optional initial elements
+            
+        Returns:
+            A new KotSet instance with the specified element type
+            
+        Example:
+            animals = KotSet.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
+            # or empty set
+            animals = KotSet.of_type(Animal)
+            animals.add(Dog("Max"))
+        """
+        instance = cls.__new__(cls)
+        instance._element_type = element_type
+        instance._elements = set()
+        
+        # Initialize with elements if provided
+        if elements is not None:
+            if isinstance(elements, set):
+                for element in elements:
+                    instance._add_with_type_check(element)
+            elif isinstance(elements, list):
+                for element in elements:
+                    instance._add_with_type_check(element)
+            else:  # Iterator
+                for element in elements:
+                    instance._add_with_type_check(element)
+                    
+        return instance
+
     def _add_with_type_check(self, element: T) -> None:
         """Add an element with type checking."""
+        # Skip type checking if element_type is a type variable or not a real type
+        if self._element_type is not None and not isinstance(self._element_type, type):
+            self._elements.add(element)
+            return
+            
         if self._element_type is None and element is not None:
             self._element_type = type(element) if not isinstance(element, KotSet) else KotSet
 
@@ -544,7 +626,12 @@ class KotSet(Generic[T]):
     def to_kot_mutable_set(self) -> 'KotMutableSet[T]':
         """Returns a KotMutableSet containing all elements."""
         from kotcollections.kot_mutable_set import KotMutableSet
-        return KotMutableSet(self._elements.copy())
+        # Preserve type information when converting
+        if self._element_type is not None:
+            mutable_set = KotMutableSet.of_type(self._element_type, self._elements.copy())
+        else:
+            mutable_set = KotMutableSet(self._elements.copy())
+        return mutable_set
 
     def to_sorted_set(self, key: Optional[Callable[[T], Any]] = None, reverse: bool = False) -> KotSet[T]:
         """Returns a sorted list of all elements."""

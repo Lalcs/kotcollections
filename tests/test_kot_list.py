@@ -1811,3 +1811,71 @@ class TestKotListOtherMethods(unittest.TestCase):
         
         result = lst3 - [2, 4]
         self.assertEqual(result.to_list(), [1, 3])  # All occurrences removed
+
+
+class TestKotListTypeSpecification(unittest.TestCase):
+    def test_class_getitem_syntax(self):
+        """Test __class_getitem__ for type specification"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        # Test creating typed KotList with parent type
+        animals = KotList[Animal]()
+        self.assertEqual(len(animals), 0)
+        
+        # Convert to mutable and add different subclass instances
+        mutable_animals = animals.to_kot_mutable_list()
+        mutable_animals.add(Dog("Buddy"))
+        mutable_animals.add(Cat("Whiskers"))
+        self.assertEqual(len(mutable_animals), 2)
+        
+        # Test with initial elements
+        animals2 = KotList[Animal]([Dog("Max"), Cat("Luna")])
+        self.assertEqual(len(animals2), 2)
+        self.assertIsInstance(animals2[0], Dog)
+        self.assertIsInstance(animals2[1], Cat)
+    
+    def test_of_type_method(self):
+        """Test of_type class method for type specification"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        # Test creating empty typed KotList
+        animals = KotList.of_type(Animal)
+        self.assertEqual(len(animals), 0)
+        
+        # Convert to mutable and add different subclass instances
+        mutable_animals = animals.to_kot_mutable_list()
+        mutable_animals.add(Dog("Buddy"))
+        mutable_animals.add(Cat("Whiskers"))
+        self.assertEqual(len(mutable_animals), 2)
+        
+        # Test with initial elements
+        animals2 = KotList.of_type(Animal, [Dog("Max"), Cat("Luna")])
+        self.assertEqual(len(animals2), 2)
+        self.assertIsInstance(animals2[0], Dog)
+        self.assertIsInstance(animals2[1], Cat)
+        
+        # Test type checking is enforced
+        class NotAnimal:
+            pass
+        
+        mutable_animals2 = animals2.to_kot_mutable_list()
+        with self.assertRaises(TypeError):
+            mutable_animals2.add(NotAnimal())

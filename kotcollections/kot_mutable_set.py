@@ -4,7 +4,7 @@ KotMutableSet: A Python implementation of Kotlin's MutableSet interface with sna
 
 from __future__ import annotations
 
-from typing import TypeVar, Set, List, Iterator, Optional, Callable, TYPE_CHECKING
+from typing import TypeVar, Set, List, Iterator, Optional, Callable, Type, TYPE_CHECKING
 
 from kotcollections.kot_set import KotSet
 
@@ -29,6 +29,83 @@ class KotMutableSet(KotSet[T]):
             elements: Initial elements for the set (set, list, or iterator)
         """
         super().__init__(elements)
+
+    @classmethod
+    def __class_getitem__(cls, element_type: Type[T]) -> Type['KotMutableSet[T]']:
+        """Enable KotMutableSet[Type]() syntax for type specification.
+        
+        Example:
+            animals = KotMutableSet[Animal]()
+            animals.add(Dog("Buddy"))
+            animals.add(Cat("Whiskers"))
+        """
+        class TypedKotMutableSet(cls):
+            def __init__(self, elements=None):
+                # Only set element type if it's an actual type, not a type variable
+                if isinstance(element_type, type):
+                    self._element_type = element_type
+                else:
+                    self._element_type = None
+                self._elements = set()
+                # Now process elements with the correct type set
+                if elements is not None:
+                    if hasattr(elements, '_elements') and hasattr(elements, 'to_list'):
+                        # It's a KotList or KotMutableList
+                        for element in elements:
+                            self._add_with_type_check(element)
+                    elif isinstance(elements, set):
+                        for element in elements:
+                            self._add_with_type_check(element)
+                    elif isinstance(elements, list):
+                        for element in elements:
+                            self._add_with_type_check(element)
+                    else:  # Iterator
+                        for element in elements:
+                            self._add_with_type_check(element)
+        
+        # Set a meaningful name for debugging
+        TypedKotMutableSet.__name__ = f"{cls.__name__}[{element_type.__name__}]"
+        TypedKotMutableSet.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
+        
+        return TypedKotMutableSet
+
+    @classmethod
+    def of_type(cls, element_type: Type[T], elements: Optional[Set[T] | List[T] | Iterator[T]] = None) -> 'KotMutableSet[T]':
+        """Create a KotMutableSet with a specific element type.
+        
+        This is useful when you want to create a mutable set of a parent type
+        but only have instances of child types.
+        
+        Args:
+            element_type: The type of elements this set will contain
+            elements: Optional initial elements
+            
+        Returns:
+            A new KotMutableSet instance with the specified element type
+            
+        Example:
+            animals = KotMutableSet.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
+            # or empty set
+            animals = KotMutableSet.of_type(Animal)
+            animals.add(Dog("Max"))
+        """
+        instance = cls.__new__(cls)
+        instance._element_type = element_type
+        instance._elements = set()
+        
+        # Initialize with elements if provided
+        if elements is not None:
+            if isinstance(elements, set):
+                for element in elements:
+                    instance._add_with_type_check(element)
+            elif isinstance(elements, list):
+                for element in elements:
+                    instance._add_with_type_check(element)
+            else:  # Iterator
+                for element in elements:
+                    instance._add_with_type_check(element)
+                    
+        return instance
 
     # Mutation operations
 

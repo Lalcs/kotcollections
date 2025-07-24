@@ -1133,5 +1133,87 @@ class TestKotSetInheritanceTypeChecking(unittest.TestCase):
         self.assertEqual(mutable_set.size, 3)
 
 
+class TestKotSetTypeSpecification(unittest.TestCase):
+    def test_class_getitem_syntax(self):
+        """Test __class_getitem__ for type specification"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+            def __hash__(self):
+                return hash(self.name)
+            def __eq__(self, other):
+                return isinstance(other, Animal) and self.name == other.name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        # Test creating typed KotSet with parent type
+        animals = KotSet[Animal]()
+        self.assertEqual(len(animals), 0)
+        
+        # Convert to mutable and add different subclass instances
+        mutable_animals = animals.to_kot_mutable_set()
+        mutable_animals.add(Dog("Buddy"))
+        mutable_animals.add(Cat("Whiskers"))
+        self.assertEqual(len(mutable_animals), 2)
+        
+        # Test with initial elements
+        animals2 = KotSet[Animal]([Dog("Max"), Cat("Luna")])
+        self.assertEqual(len(animals2), 2)
+        self.assertTrue(any(isinstance(elem, Dog) and elem.name == "Max" for elem in animals2))
+        self.assertTrue(any(isinstance(elem, Cat) and elem.name == "Luna" for elem in animals2))
+    
+    def test_of_type_method(self):
+        """Test of_type class method for type specification"""
+        # Define test classes with inheritance
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+            def __hash__(self):
+                return hash(self.name)
+            def __eq__(self, other):
+                return isinstance(other, Animal) and self.name == other.name
+        
+        class Dog(Animal):
+            pass
+        
+        class Cat(Animal):
+            pass
+        
+        # Test creating empty typed KotSet
+        animals = KotSet.of_type(Animal)
+        self.assertEqual(len(animals), 0)
+        
+        # Convert to mutable and add different subclass instances
+        mutable_animals = animals.to_kot_mutable_set()
+        mutable_animals.add(Dog("Buddy"))
+        mutable_animals.add(Cat("Whiskers"))
+        self.assertEqual(len(mutable_animals), 2)
+        
+        # Test with initial elements (list)
+        animals2 = KotSet.of_type(Animal, [Dog("Max"), Cat("Luna")])
+        self.assertEqual(len(animals2), 2)
+        self.assertTrue(any(isinstance(elem, Dog) and elem.name == "Max" for elem in animals2))
+        self.assertTrue(any(isinstance(elem, Cat) and elem.name == "Luna" for elem in animals2))
+        
+        # Test with initial elements (set)
+        animals3 = KotSet.of_type(Animal, {Dog("Rex"), Cat("Mittens")})
+        self.assertEqual(len(animals3), 2)
+        self.assertTrue(any(isinstance(elem, Dog) and elem.name == "Rex" for elem in animals3))
+        self.assertTrue(any(isinstance(elem, Cat) and elem.name == "Mittens" for elem in animals3))
+        
+        # Test type checking is enforced
+        class NotAnimal:
+            pass
+        
+        mutable_animals2 = animals2.to_kot_mutable_set()
+        with self.assertRaises(TypeError):
+            mutable_animals2.add(NotAnimal())
+
+
 if __name__ == '__main__':
     unittest.main()

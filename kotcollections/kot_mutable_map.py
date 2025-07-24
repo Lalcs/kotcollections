@@ -4,7 +4,7 @@ KotMutableMap: A Python implementation of Kotlin's MutableMap interface with sna
 
 from __future__ import annotations
 
-from typing import TypeVar, Dict, List, Iterator, Optional, Callable, Tuple
+from typing import TypeVar, Dict, List, Iterator, Optional, Callable, Tuple, Type
 
 from kotcollections.kot_map import KotMap
 
@@ -26,6 +26,81 @@ class KotMutableMap(KotMap[K, V]):
             elements: Initial elements for the map (dict, list of tuples, or iterator of tuples)
         """
         super().__init__(elements)
+
+    @classmethod
+    def __class_getitem__(cls, types: Tuple[Type[K], Type[V]]) -> Type['KotMutableMap[K, V]']:
+        """Enable KotMutableMap[KeyType, ValueType]() syntax for type specification.
+        
+        Example:
+            animals_by_name = KotMutableMap[str, Animal]()
+            animals_by_name.put("Buddy", Dog("Buddy"))
+            animals_by_name.put("Whiskers", Cat("Whiskers"))
+        """
+        key_type, value_type = types
+        
+        class TypedKotMutableMap(cls):
+            def __init__(self, elements=None):
+                # Only set types if they are actual types, not type variables
+                self._elements = {}
+                self._key_type = key_type if isinstance(key_type, type) else None
+                self._value_type = value_type if isinstance(value_type, type) else None
+                # Now process elements with the correct types set
+                if elements is not None:
+                    if isinstance(elements, dict):
+                        for key, value in elements.items():
+                            self._put_with_type_check(key, value)
+                    elif isinstance(elements, list):
+                        for key, value in elements:
+                            self._put_with_type_check(key, value)
+                    else:  # Iterator
+                        for key, value in elements:
+                            self._put_with_type_check(key, value)
+        
+        # Set a meaningful name for debugging
+        TypedKotMutableMap.__name__ = f"{cls.__name__}[{key_type.__name__}, {value_type.__name__}]"
+        TypedKotMutableMap.__qualname__ = f"{cls.__qualname__}[{key_type.__name__}, {value_type.__name__}]"
+        
+        return TypedKotMutableMap
+
+    @classmethod
+    def of_type(cls, key_type: Type[K], value_type: Type[V], elements: Optional[Dict[K, V] | List[Tuple[K, V]] | Iterator[Tuple[K, V]]] = None) -> 'KotMutableMap[K, V]':
+        """Create a KotMutableMap with specific key and value types.
+        
+        This is useful when you want to create a mutable map with parent types
+        but only have instances of child types.
+        
+        Args:
+            key_type: The type of keys this map will contain
+            value_type: The type of values this map will contain
+            elements: Optional initial elements
+            
+        Returns:
+            A new KotMutableMap instance with the specified types
+            
+        Example:
+            animals_by_name = KotMutableMap.of_type(str, Animal, [("Buddy", Dog("Buddy")), ("Whiskers", Cat("Whiskers"))])
+            # or empty map
+            animals_by_name = KotMutableMap.of_type(str, Animal)
+            animals_by_name.put("Max", Dog("Max"))
+        """
+        instance = cls.__new__(cls)
+        instance._elements = {}
+        instance._key_type = key_type
+        instance._value_type = value_type
+        
+        # Initialize with elements if provided
+        if elements is not None:
+            if isinstance(elements, dict):
+                for key, value in elements.items():
+                    instance._put_with_type_check(key, value)
+            elif isinstance(elements, list):
+                for key, value in elements:
+                    instance._put_with_type_check(key, value)
+            else:  # Iterator
+                for key, value in elements:
+                    instance._put_with_type_check(key, value)
+                    
+        return instance
 
     # Mutation operations
 
