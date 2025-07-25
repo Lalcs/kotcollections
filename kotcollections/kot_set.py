@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from functools import reduce
-from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List, Type, TYPE_CHECKING
+from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List, Type, TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
     from kotcollections.kot_list import KotList
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 R = TypeVar('R')
+
 
 
 class KotSet(Generic[T]):
@@ -109,23 +110,9 @@ class KotSet(Generic[T]):
             animals = KotSet.of_type(Animal)
             animals.add(Dog("Max"))
         """
-        instance = cls.__new__(cls)
-        instance._element_type = element_type
-        instance._elements = set()
-        
-        # Initialize with elements if provided
-        if elements is not None:
-            if isinstance(elements, set):
-                for element in elements:
-                    instance._add_with_type_check(element)
-            elif isinstance(elements, list):
-                for element in elements:
-                    instance._add_with_type_check(element)
-            else:  # Iterator
-                for element in elements:
-                    instance._add_with_type_check(element)
-                    
-        return instance
+        # Use __class_getitem__ to create the same dynamic subclass
+        typed_class = cls[element_type]
+        return typed_class(elements)
 
     def _add_with_type_check(self, element: T) -> None:
         """Add an element with type checking."""

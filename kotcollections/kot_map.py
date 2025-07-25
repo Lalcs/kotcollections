@@ -14,6 +14,7 @@ V = TypeVar('V')
 R = TypeVar('R')
 
 
+
 class KotMap(Generic[K, V]):
     """A Python implementation of Kotlin's Map interface.
     
@@ -98,24 +99,9 @@ class KotMap(Generic[K, V]):
             animals_by_name = KotMap.of_type(str, Animal)
             animals_by_name.put("Max", Dog("Max"))
         """
-        instance = cls.__new__(cls)
-        instance._elements = {}
-        instance._key_type = key_type
-        instance._value_type = value_type
-        
-        # Initialize with elements if provided
-        if elements is not None:
-            if isinstance(elements, dict):
-                for key, value in elements.items():
-                    instance._put_with_type_check(key, value)
-            elif isinstance(elements, list):
-                for key, value in elements:
-                    instance._put_with_type_check(key, value)
-            else:  # Iterator
-                for key, value in elements:
-                    instance._put_with_type_check(key, value)
-                    
-        return instance
+        # Use __class_getitem__ to create the same dynamic subclass
+        typed_class = cls[key_type, value_type]
+        return typed_class(elements)
 
     def _put_with_type_check(self, key: K, value: V) -> None:
         """Add a key-value pair with type checking."""

@@ -1951,3 +1951,32 @@ class TestKotListTypeSpecification(unittest.TestCase):
         self.assertEqual(lists_of_lists.size, 2)
         self.assertEqual(lists_of_lists[0][0].name, "Buy milk")
         self.assertEqual(lists_of_lists[1][0].name, "Write code")
+    
+    def test_class_getitem_and_of_type_same_type(self):
+        """Test that KotList[T]() and KotList.of_type(T) return functionally equivalent types"""
+        from kotcollections import KotMutableList
+        
+        # Define test class
+        class Animal:
+            def __init__(self, name):
+                self.name = name
+        
+        # Create instances using both methods
+        list1 = KotList[Animal]()
+        list2 = KotList.of_type(Animal, [])
+        
+        # Without cache, they won't be the exact same type object, but functionally equivalent
+        self.assertEqual(type(list1).__name__, type(list2).__name__)
+        self.assertEqual(type(list1).__name__, "KotList[Animal]")
+        
+        # Both should have the same element type
+        self.assertEqual(list1._element_type, Animal)
+        self.assertEqual(list2._element_type, Animal)
+        
+        # Test with KotMutableList too
+        mlist1 = KotMutableList[Animal]()
+        mlist2 = KotMutableList.of_type(Animal, [])
+        
+        # Without cache, they won't be the exact same type object, but functionally equivalent
+        self.assertEqual(type(mlist1).__name__, type(mlist2).__name__)
+        self.assertEqual(type(mlist1).__name__, "KotMutableList[Animal]")

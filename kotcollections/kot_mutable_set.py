@@ -4,7 +4,7 @@ KotMutableSet: A Python implementation of Kotlin's MutableSet interface with sna
 
 from __future__ import annotations
 
-from typing import TypeVar, Set, List, Iterator, Optional, Callable, Type, TYPE_CHECKING
+from typing import TypeVar, Set, List, Iterator, Optional, Callable, Type, TYPE_CHECKING, Dict, Tuple
 
 from kotcollections.kot_set import KotSet
 
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from kotcollections.kot_mutable_list import KotMutableList
 
 T = TypeVar('T')
+
 
 
 class KotMutableSet(KotSet[T]):
@@ -89,23 +90,9 @@ class KotMutableSet(KotSet[T]):
             animals = KotMutableSet.of_type(Animal)
             animals.add(Dog("Max"))
         """
-        instance = cls.__new__(cls)
-        instance._element_type = element_type
-        instance._elements = set()
-        
-        # Initialize with elements if provided
-        if elements is not None:
-            if isinstance(elements, set):
-                for element in elements:
-                    instance._add_with_type_check(element)
-            elif isinstance(elements, list):
-                for element in elements:
-                    instance._add_with_type_check(element)
-            else:  # Iterator
-                for element in elements:
-                    instance._add_with_type_check(element)
-                    
-        return instance
+        # Use __class_getitem__ to create the same dynamic subclass
+        typed_class = cls[element_type]
+        return typed_class(elements)
 
     # Mutation operations
 

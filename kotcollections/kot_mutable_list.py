@@ -62,17 +62,9 @@ class KotMutableList(KotList[T]):
             animals = KotMutableList.of_type(Animal)
             animals.add(Dog("Max"))
         """
-        instance = cls.__new__(cls)
-        instance._element_type = element_type
-        instance._elements = []
-        
-        # Initialize with elements if provided
-        if elements is not None:
-            for elem in elements:
-                instance._check_type(elem)
-                instance._elements.append(elem)
-                
-        return instance
+        # Use __class_getitem__ to create the same dynamic subclass
+        typed_class = cls[element_type]
+        return typed_class(elements)
 
     def __setitem__(self, index: int, value: T) -> None:
         self.set(index, value)

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from kotcollections.kot_mutable_set import KotMutableSet
 
 
+
 class KotList(Generic[T]):
     def __init__(self, elements: Optional[Iterable[T]] = None):
         self._element_type: Optional[type] = None
@@ -88,17 +89,9 @@ class KotList(Generic[T]):
             # or empty list
             animals = KotList.of_type(Animal)
         """
-        instance = cls.__new__(cls)
-        instance._element_type = element_type
-        instance._elements = []
-        
-        # Initialize with elements if provided
-        if elements is not None:
-            for elem in elements:
-                instance._check_type(elem)
-                instance._elements.append(elem)
-                
-        return instance
+        # Use __class_getitem__ to create the same dynamic subclass
+        typed_class = cls[element_type]
+        return typed_class(elements)
 
     def _check_type(self, element: Any) -> None:
         """Check if the element has the correct type for this list."""
