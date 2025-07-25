@@ -7,6 +7,8 @@ import unittest
 from kotcollections.kot_set import KotSet
 from kotcollections.kot_map import KotMap
 from kotcollections.kot_list import KotList
+from kotcollections.kot_mutable_set import KotMutableSet
+from kotcollections.kot_mutable_list import KotMutableList
 
 
 class TestKotSetBasics(unittest.TestCase):
@@ -1253,6 +1255,40 @@ class TestKotSetTypeSpecification(unittest.TestCase):
         # Verify we can still add correct types
         mutable_list.add(Dog("Rex"))
         self.assertEqual(len(mutable_list), 2)
+    
+    def test_kot_list_element_type_with_class_getitem(self):
+        """Test KotSet with KotList[T] as element type using __class_getitem__ syntax"""
+        # Define test classes
+        class Person:
+            def __init__(self, name):
+                self.name = name
+                
+        # Create a set with KotList[Person] as element type using __class_getitem__ syntax
+        lists_set = KotMutableSet[KotList[Person]]()
+        
+        # Create a mutable list with Person type
+        persons1 = KotMutableList[Person]()
+        persons1.add(Person("Alice"))
+        persons1.add(Person("Bob"))
+        
+        # Convert to immutable KotList
+        immutable_persons1 = persons1.to_kot_list()
+        
+        # This should work without TypeError
+        lists_set.add(immutable_persons1)
+        
+        # Create another person list
+        persons2 = KotMutableList[Person]()
+        persons2.add(Person("Charlie"))
+        
+        # Convert to immutable KotList
+        immutable_persons2 = persons2.to_kot_list()
+        lists_set.add(immutable_persons2)
+        
+        # Verify the elements were stored correctly
+        self.assertEqual(lists_set.size, 2)
+        self.assertTrue(lists_set.contains(immutable_persons1))
+        self.assertTrue(lists_set.contains(immutable_persons2))
 
 
 if __name__ == '__main__':

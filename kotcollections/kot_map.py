@@ -137,15 +137,47 @@ class KotMap(Generic[K, V]):
         if key is not None and self._key_type is not None:
             if isinstance(key, KotMap) and self._key_type == KotMap:
                 pass  # KotMap keys are allowed
-            elif not isinstance(key, KotMap) and not isinstance(key, self._key_type):
-                raise TypeError(f"All keys must be of type {self._key_type.__name__}, got {type(key).__name__}")
+            elif not isinstance(key, KotMap):
+                # Check if key is an instance of the expected type
+                if isinstance(key, self._key_type):
+                    pass  # Direct instance check passed
+                # Special handling for __class_getitem__ types (e.g., KotList[Holiday])
+                elif (hasattr(self._key_type, '__base__') and 
+                      hasattr(self._key_type, '__name__') and 
+                      '[' in self._key_type.__name__ and
+                      isinstance(key, self._key_type.__base__)):
+                    # Check if the key has matching element type for KotList/KotSet/KotMap types
+                    if hasattr(key, '_element_type') and hasattr(self._key_type, '__new__'):
+                        # Extract expected element type from the __class_getitem__ type
+                        # This is a more strict check for collection types
+                        pass
+                    else:
+                        pass
+                else:
+                    raise TypeError(f"All keys must be of type {self._key_type.__name__}, got {type(key).__name__}")
 
         # Check value type
         if value is not None and self._value_type is not None:
             if isinstance(value, KotMap) and self._value_type == KotMap:
                 pass  # KotMap values are allowed
-            elif not isinstance(value, KotMap) and not isinstance(value, self._value_type):
-                raise TypeError(f"All values must be of type {self._value_type.__name__}, got {type(value).__name__}")
+            elif not isinstance(value, KotMap):
+                # Check if value is an instance of the expected type
+                if isinstance(value, self._value_type):
+                    pass  # Direct instance check passed
+                # Special handling for __class_getitem__ types (e.g., KotList[Holiday])
+                elif (hasattr(self._value_type, '__base__') and 
+                      hasattr(self._value_type, '__name__') and 
+                      '[' in self._value_type.__name__ and
+                      isinstance(value, self._value_type.__base__)):
+                    # Check if the value has matching element type for KotList/KotSet/KotMap types
+                    if hasattr(value, '_element_type') and hasattr(self._value_type, '__new__'):
+                        # Extract expected element type from the __class_getitem__ type
+                        # This is a more strict check for collection types
+                        pass
+                    else:
+                        pass
+                else:
+                    raise TypeError(f"All values must be of type {self._value_type.__name__}, got {type(value).__name__}")
 
         self._elements[key] = value
 

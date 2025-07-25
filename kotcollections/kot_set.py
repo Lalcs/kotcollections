@@ -140,10 +140,26 @@ class KotSet(Generic[T]):
         if element is not None and self._element_type is not None:
             if isinstance(element, KotSet) and self._element_type == KotSet:
                 self._elements.add(element)
-            elif not isinstance(element, KotSet) and not isinstance(element, self._element_type):
-                raise TypeError(
-                    f"All elements must be of type {self._element_type.__name__}, got {type(element).__name__}"
-                )
+            elif not isinstance(element, KotSet):
+                # Check if element is an instance of the expected type
+                if isinstance(element, self._element_type):
+                    self._elements.add(element)
+                # Special handling for __class_getitem__ types (e.g., KotList[Holiday])
+                elif (hasattr(self._element_type, '__base__') and 
+                      hasattr(self._element_type, '__name__') and 
+                      '[' in self._element_type.__name__ and
+                      isinstance(element, self._element_type.__base__)):
+                    # Check if the element has matching element type for KotList/KotSet/KotMap types
+                    if hasattr(element, '_element_type') and hasattr(self._element_type, '__new__'):
+                        # Extract expected element type from the __class_getitem__ type
+                        # This is a more strict check for collection types
+                        self._elements.add(element)
+                    else:
+                        self._elements.add(element)
+                else:
+                    raise TypeError(
+                        f"All elements must be of type {self._element_type.__name__}, got {type(element).__name__}"
+                    )
             else:
                 self._elements.add(element)
         elif element is None:

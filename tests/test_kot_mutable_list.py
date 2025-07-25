@@ -168,12 +168,12 @@ class TestKotMutableListModify(unittest.TestCase):
         removed = lst.remove_first()
         self.assertEqual(removed, 1)
         self.assertEqual(lst.to_list(), [2, 3, 4, 5])
-        
+
         # Remove from single element list
         single = KotMutableList([42])
         self.assertEqual(single.remove_first(), 42)
         self.assertTrue(single.is_empty())
-        
+
         # Remove from empty list should raise error
         empty = KotMutableList()
         with self.assertRaises(IndexError):
@@ -184,12 +184,12 @@ class TestKotMutableListModify(unittest.TestCase):
         removed = lst.remove_last()
         self.assertEqual(removed, 5)
         self.assertEqual(lst.to_list(), [1, 2, 3, 4])
-        
+
         # Remove from single element list
         single = KotMutableList([42])
         self.assertEqual(single.remove_last(), 42)
         self.assertTrue(single.is_empty())
-        
+
         # Remove from empty list should raise error
         empty = KotMutableList()
         with self.assertRaises(IndexError):
@@ -199,17 +199,17 @@ class TestKotMutableListModify(unittest.TestCase):
         lst = KotMutableList([1, 2, 3])
         self.assertEqual(lst.remove_first_or_null(), 1)
         self.assertEqual(lst.to_list(), [2, 3])
-        
+
         # Remove from empty list should return None
         empty = KotMutableList()
         self.assertIsNone(empty.remove_first_or_null())
-        
+
     def test_remove_first_or_none(self):
         lst = KotMutableList([1, 2, 3])
         # Verify alias returns same result as remove_first_or_null
         self.assertEqual(lst.remove_first_or_none(), 1)
         self.assertEqual(lst.to_list(), [2, 3])
-        
+
         empty = KotMutableList()
         self.assertIsNone(empty.remove_first_or_none())
 
@@ -217,17 +217,17 @@ class TestKotMutableListModify(unittest.TestCase):
         lst = KotMutableList([1, 2, 3])
         self.assertEqual(lst.remove_last_or_null(), 3)
         self.assertEqual(lst.to_list(), [1, 2])
-        
+
         # Remove from empty list should return None
         empty = KotMutableList()
         self.assertIsNone(empty.remove_last_or_null())
-        
+
     def test_remove_last_or_none(self):
         lst = KotMutableList([1, 2, 3])
         # Verify alias returns same result as remove_last_or_null
         self.assertEqual(lst.remove_last_or_none(), 3)
         self.assertEqual(lst.to_list(), [1, 2])
-        
+
         empty = KotMutableList()
         self.assertIsNone(empty.remove_last_or_none())
 
@@ -268,12 +268,12 @@ class TestKotMutableListSorting(unittest.TestCase):
         lst = KotMutableList([-5, -1, 3, -2, 4])
         lst.sort_with(lambda a, b: abs(a) - abs(b))
         self.assertEqual(lst.to_list(), [-1, -2, 3, 4, -5])
-        
+
         # Test with string length comparison
         lst_str = KotMutableList(['aaa', 'bb', 'cccc', 'd'])
         lst_str.sort_with(lambda a, b: len(a) - len(b))
         self.assertEqual(lst_str.to_list(), ['d', 'bb', 'aaa', 'cccc'])
-        
+
         # Test reverse comparison
         lst_int = KotMutableList([3, 1, 4, 1, 5])
         lst_int.sort_with(lambda a, b: b - a)
@@ -391,63 +391,63 @@ class TestKotMutableListChaining(unittest.TestCase):
 class TestKotMutableListTypeChecking(unittest.TestCase):
     def test_add_type_checking(self):
         lst = KotMutableList([1, 2, 3])
-        
+
         # Add same type - should work
         lst.add(4)
         self.assertEqual(lst.to_list(), [1, 2, 3, 4])
-        
+
         # Add different type - should raise TypeError
         with self.assertRaises(TypeError) as cm:
             lst.add('string')
         self.assertIn("Cannot add element of type 'str' to KotList[int]", str(cm.exception))
-    
+
     def test_add_at_type_checking(self):
         lst = KotMutableList(['a', 'b', 'c'])
-        
+
         # Add same type - should work
         lst.add_at(1, 'd')
         self.assertEqual(lst.to_list(), ['a', 'd', 'b', 'c'])
-        
+
         # Add different type - should raise TypeError
         with self.assertRaises(TypeError) as cm:
             lst.add_at(0, 123)
         self.assertIn("Cannot add element of type 'int' to KotList[str]", str(cm.exception))
-    
+
     def test_set_type_checking(self):
         lst = KotMutableList([1.0, 2.0, 3.0])
-        
+
         # Set same type - should work
         lst.set(1, 5.0)
         self.assertEqual(lst.to_list(), [1.0, 5.0, 3.0])
-        
+
         # Set different type - should raise TypeError
         with self.assertRaises(TypeError) as cm:
             lst.set(0, 'not a float')
         self.assertIn("Cannot add element of type 'str' to KotList[float]", str(cm.exception))
-    
+
     def test_add_all_type_checking(self):
         lst = KotMutableList([1, 2])
-        
+
         # Add all same type - should work
         lst.add_all([3, 4, 5])
         self.assertEqual(lst.to_list(), [1, 2, 3, 4, 5])
-        
+
         # Add all with mixed types - should raise TypeError
         with self.assertRaises(TypeError) as cm:
             lst.add_all([6, 'seven', 8])
         self.assertIn("Cannot add element of type 'str' to KotList[int]", str(cm.exception))
-    
+
     def test_empty_list_first_element_sets_type(self):
         lst = KotMutableList()
-        
+
         # First element sets the type
         lst.add('first')
         self.assertEqual(lst._element_type, str)
-        
+
         # Now only strings can be added
         lst.add('second')
         self.assertEqual(lst.to_list(), ['first', 'second'])
-        
+
         # Other types should fail
         with self.assertRaises(TypeError):
             lst.add(123)
@@ -455,7 +455,7 @@ class TestKotMutableListTypeChecking(unittest.TestCase):
 
 class TestKotMutableListInheritedTransformations(unittest.TestCase):
     """Test that inherited transformation methods from KotList work correctly with KotMutableList."""
-    
+
     def test_associate_with_returns_kot_map(self):
         lst = KotMutableList(['a', 'bb', 'ccc'])
         assoc = lst.associate_with(lambda x: len(x))
@@ -464,7 +464,7 @@ class TestKotMutableListInheritedTransformations(unittest.TestCase):
         # Verify KotMap methods work
         self.assertEqual(assoc.get('a'), 1)
         self.assertTrue(assoc.contains_key('bb'))
-    
+
     def test_associate_by_returns_kot_map(self):
         lst = KotMutableList(['a', 'bb', 'ccc'])
         assoc = lst.associate_by(lambda x: len(x))
@@ -473,7 +473,7 @@ class TestKotMutableListInheritedTransformations(unittest.TestCase):
         # Verify KotMap methods work
         self.assertEqual(assoc.get(2), 'bb')
         self.assertTrue(assoc.contains_key(3))
-    
+
     def test_associate_by_with_value_returns_kot_map(self):
         lst = KotMutableList(['a', 'bb', 'ccc'])
         assoc = lst.associate_by_with_value(lambda x: len(x), lambda x: x.upper())
@@ -482,7 +482,7 @@ class TestKotMutableListInheritedTransformations(unittest.TestCase):
         # Verify KotMap methods work
         self.assertEqual(assoc.get(1), 'A')
         self.assertTrue(assoc.contains_key(2))
-    
+
     def test_group_by_returns_kot_map(self):
         lst = KotMutableList([1, 2, 3, 4, 5, 6])
         grouped = lst.group_by(lambda x: x % 2)
@@ -495,7 +495,7 @@ class TestKotMutableListInheritedTransformations(unittest.TestCase):
         # Verify values are KotList instances
         from kotcollections import KotList
         self.assertIsInstance(grouped.get(0), KotList)  # Should be KotList
-    
+
     def test_group_by_with_value_returns_kot_map(self):
         from kotcollections import KotList
         lst = KotMutableList(['a', 'bb', 'ccc', 'dd', 'e'])
@@ -514,100 +514,103 @@ class TestKotMutableListInheritedTransformations(unittest.TestCase):
 class TestKotMutableListTypeSpecification(unittest.TestCase):
     def test_class_getitem_syntax(self):
         """Test __class_getitem__ for type specification"""
+
         # Define test classes with inheritance
         class Animal:
             def __init__(self, name):
                 self.name = name
-        
+
         class Dog(Animal):
             pass
-        
+
         class Cat(Animal):
             pass
-        
+
         # Test creating typed KotMutableList with parent type
         animals = KotMutableList[Animal]()
         self.assertEqual(len(animals), 0)
-        
+
         # Add different subclass instances
         animals.add(Dog("Buddy"))
         animals.add(Cat("Whiskers"))
         self.assertEqual(len(animals), 2)
-        
+
         # Test with initial elements
         animals2 = KotMutableList[Animal]([Dog("Max"), Cat("Luna")])
         self.assertEqual(len(animals2), 2)
         self.assertIsInstance(animals2[0], Dog)
         self.assertIsInstance(animals2[1], Cat)
-        
+
         # Add more animals
         animals2.add(Dog("Rex"))
         self.assertEqual(len(animals2), 3)
-    
+
     def test_of_type_method(self):
         """Test of_type class method for type specification"""
+
         # Define test classes with inheritance
         class Animal:
             def __init__(self, name):
                 self.name = name
-        
+
         class Dog(Animal):
             pass
-        
+
         class Cat(Animal):
             pass
-        
+
         # Test creating empty typed KotMutableList
         animals = KotMutableList.of_type(Animal)
         self.assertEqual(len(animals), 0)
-        
+
         # Add different subclass instances
         animals.add(Dog("Buddy"))
         animals.add(Cat("Whiskers"))
         self.assertEqual(len(animals), 2)
-        
+
         # Test with initial elements
         animals2 = KotMutableList.of_type(Animal, [Dog("Max"), Cat("Luna")])
         self.assertEqual(len(animals2), 2)
         self.assertIsInstance(animals2[0], Dog)
         self.assertIsInstance(animals2[1], Cat)
-        
+
         # Test type checking is enforced
         class NotAnimal:
             pass
-        
+
         with self.assertRaises(TypeError):
             animals2.add(NotAnimal())
-    
+
     def test_type_preservation_in_conversions(self):
         """Test that type information is preserved during conversions"""
+
         # Define test classes with inheritance
         class Animal:
             def __init__(self, name):
                 self.name = name
-        
+
         class Dog(Animal):
             pass
-        
+
         # Test KotMutableList type preservation
         animals = KotMutableList.of_type(Animal, [Dog("Buddy")])
         self.assertEqual(animals._element_type, Animal)
-        
+
         # Test to_kot_list preserves type
         copied = animals.to_kot_list()
         self.assertEqual(copied._element_type, Animal)
-        
+
         # Test to_kot_mutable_list preserves type
         mutable = animals.to_kot_mutable_list()
         self.assertEqual(mutable._element_type, Animal)
         # Verify we can still add correct types
         mutable.add(Dog("Max"))
         self.assertEqual(len(mutable), 2)
-        
+
         # Test to_kot_set preserves type
         kot_set = animals.to_kot_set()
         self.assertEqual(kot_set._element_type, Animal)
-        
+
         # Test to_kot_mutable_set preserves type
         mutable_set = animals.to_kot_mutable_set()
         self.assertEqual(mutable_set._element_type, Animal)

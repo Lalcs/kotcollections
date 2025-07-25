@@ -6,6 +6,8 @@ import unittest
 
 from kotcollections.kot_map import KotMap
 from kotcollections.kot_mutable_map import KotMutableMap
+from kotcollections.kot_list import KotList
+from kotcollections.kot_mutable_list import KotMutableList
 
 
 class TestKotMapBasics(unittest.TestCase):
@@ -893,6 +895,70 @@ class TestKotMapTypeSpecification(unittest.TestCase):
         # Verify we can still add correct types
         mutable.put("dog2", Dog("Max"))
         self.assertEqual(len(mutable), 2)
+    
+    def test_kot_list_value_type_with_class_getitem(self):
+        """Test KotMap with KotList[T] as value type using __class_getitem__ syntax"""
+        # Define test classes
+        class Holiday:
+            def __init__(self, name):
+                self.name = name
+        
+        import datetime
+        
+        # Create a map with KotList[Holiday] as value type using __class_getitem__ syntax
+        cache = KotMutableMap[datetime.date, KotList[Holiday]]()
+        
+        # Create a mutable list with Holiday type
+        holidays = KotMutableList[Holiday]()
+        holidays.add(Holiday("New Year"))
+        holidays.add(Holiday("Christmas"))
+        
+        # Convert to immutable KotList
+        immutable_holidays = holidays.to_kot_list()
+        
+        # This should work without TypeError
+        today = datetime.date.today()
+        cache.put(today, immutable_holidays)
+        
+        # Verify the value was stored correctly
+        retrieved = cache.get(today)
+        self.assertEqual(len(retrieved), 2)
+        self.assertEqual(retrieved[0].name, "New Year")
+        self.assertEqual(retrieved[1].name, "Christmas")
+    
+    def test_kot_list_key_type_with_class_getitem(self):
+        """Test KotMap with KotList[T] as key type using __class_getitem__ syntax"""
+        # Define test classes
+        class Tag:
+            def __init__(self, name):
+                self.name = name
+                
+        # Create a map with KotList[Tag] as key type using __class_getitem__ syntax
+        tag_map = KotMutableMap[KotList[Tag], str]()
+        
+        # Create a mutable list with Tag type
+        tags1 = KotMutableList[Tag]()
+        tags1.add(Tag("python"))
+        tags1.add(Tag("kotlin"))
+        
+        # Convert to immutable KotList
+        immutable_tags1 = tags1.to_kot_list()
+        
+        # This should work without TypeError
+        tag_map.put(immutable_tags1, "Programming languages")
+        
+        # Create another tag list
+        tags2 = KotMutableList[Tag]()
+        tags2.add(Tag("java"))
+        
+        # Convert to immutable KotList
+        immutable_tags2 = tags2.to_kot_list()
+        tag_map.put(immutable_tags2, "JVM language")
+        
+        # Verify the values were stored correctly
+        self.assertEqual(tag_map.size, 2)
+        self.assertEqual(tag_map.get(immutable_tags1), "Programming languages")
+        self.assertEqual(tag_map.get(immutable_tags2), "JVM language")
 
 
 if __name__ == '__main__':

@@ -1915,3 +1915,39 @@ class TestKotListTypeSpecification(unittest.TestCase):
         # Verify we can still add correct types
         mutable_set.add(Dog("Rex"))
         self.assertEqual(mutable_set.size, 2)
+    
+    def test_kot_list_element_type_with_class_getitem(self):
+        """Test KotList with KotList[T] as element type using __class_getitem__ syntax"""
+        from kotcollections import KotMutableList
+        
+        # Define test classes
+        class Task:
+            def __init__(self, name):
+                self.name = name
+                
+        # Create a list with KotList[Task] as element type using __class_getitem__ syntax
+        lists_of_lists = KotMutableList[KotList[Task]]()
+        
+        # Create a mutable list with Task type
+        tasks1 = KotMutableList[Task]()
+        tasks1.add(Task("Buy milk"))
+        tasks1.add(Task("Walk dog"))
+        
+        # Convert to immutable KotList
+        immutable_tasks1 = tasks1.to_kot_list()
+        
+        # This should work without TypeError
+        lists_of_lists.add(immutable_tasks1)
+        
+        # Create another task list
+        tasks2 = KotMutableList[Task]()
+        tasks2.add(Task("Write code"))
+        
+        # Convert to immutable KotList
+        immutable_tasks2 = tasks2.to_kot_list()
+        lists_of_lists.add(immutable_tasks2)
+        
+        # Verify the elements were stored correctly
+        self.assertEqual(lists_of_lists.size, 2)
+        self.assertEqual(lists_of_lists[0][0].name, "Buy milk")
+        self.assertEqual(lists_of_lists[1][0].name, "Write code")
