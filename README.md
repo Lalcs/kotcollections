@@ -204,10 +204,10 @@ For detailed documentation of all available methods, please refer to the [API Re
 
 ## What's New
 
-- Added KotList.subtract(other) as an alias of minus(other) for set-style difference operations (returns KotList)
-- Added KotList.slice_range(range) delegating to slice(indices); note that `slice()` accepts any iterable of indices including `range`
+- BREAKING: KotList.intersect/union/subtract now return KotSet (Kotlin-compatible Set semantics)
+- KotList.slice_range(range) delegates to slice(indices); `slice()` accepts `range` and other iterables of indices
 - Added KotMutableList.remove_if(predicate) and replace_all(operator)
-- Updated docs with notes that KotList.intersect/union/subtract return KotList (not Set) to preserve order and Python list semantics
+- Docs updated to reflect Set-returning behavior for intersect/union/subtract and to clarify list vs set alternatives (minus/plus)
 
 ## Performance Considerations
 

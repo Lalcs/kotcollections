@@ -594,8 +594,8 @@ class KotList(Generic[T]):
                 result.append(element)
         return KotList(result)
 
-    def intersect(self, other: Iterable[T]) -> 'KotList[T]':
-        # Support KotSet and KotMap explicitly
+    def intersect(self, other: Iterable[T]) -> 'KotSet[T]':
+        """Returns a set containing elements present in both collections (Kotlin-compatible)."""
         from kotcollections.kot_set import KotSet
         from kotcollections.kot_map import KotMap
         
@@ -605,32 +605,38 @@ class KotList(Generic[T]):
             other_set = set(other.values)
         else:
             other_set = set(other)
-        return KotList([element for element in self._elements if element in other_set])
+        result = {element for element in self._elements if element in other_set}
+        return KotSet(result)
 
-    def union(self, other: Iterable[T]) -> 'KotList[T]':
-        # Support KotSet and KotMap explicitly
+    def union(self, other: Iterable[T]) -> 'KotSet[T]':
+        """Returns a set containing all distinct elements from both collections (Kotlin-compatible)."""
         from kotcollections.kot_set import KotSet
         from kotcollections.kot_map import KotMap
         
-        result = list(self._elements)
-        seen = set(self._elements)
-        
+        base = set(self._elements)
         if isinstance(other, KotSet):
-            iter_other = other
+            base |= set(other)
         elif isinstance(other, KotMap):
-            iter_other = other.values
+            base |= set(other.values)
         else:
-            iter_other = other
-            
-        for element in iter_other:
-            if element not in seen:
-                result.append(element)
-                seen.add(element)
-        return KotList(result)
+            base |= set(other)
+        return KotSet(base)
 
-    def subtract(self, other: Iterable[T]) -> 'KotList[T]':
-        """Alias of minus(other): returns a list containing all elements of this list except those in 'other'."""
-        return self.minus(other)
+    def subtract(self, other: Iterable[T]) -> 'KotSet[T]':
+        """Returns a set containing all elements of this list that are not in 'other' (Kotlin-compatible)."""
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        base = set(self._elements)
+        if hasattr(other, '__iter__'):
+            if isinstance(other, KotSet):
+                remove = set(other)
+            elif isinstance(other, KotMap):
+                remove = set(other.values)
+            else:
+                remove = set(other)
+        else:
+            remove = {other}
+        return KotSet(base - remove)
 
     def plus(self, element: Union[T, Iterable[T]]) -> 'KotList[T]':
         # Support KotSet and KotMap explicitly

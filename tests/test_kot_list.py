@@ -814,13 +814,17 @@ class TestKotListCollectionOps(unittest.TestCase):
         lst1 = KotList([1, 2, 3, 4, 5])
         lst2 = [3, 4, 5, 6, 7]
         intersection = lst1.intersect(lst2)
-        self.assertEqual(intersection.to_list(), [3, 4, 5])
+        from kotcollections import KotSet
+        self.assertIsInstance(intersection, KotSet)
+        self.assertEqual(set(intersection.to_list()), {3, 4, 5})
 
     def test_union(self):
         lst1 = KotList([1, 2, 3])
         lst2 = [3, 4, 5]
         union = lst1.union(lst2)
-        self.assertEqual(union.to_list(), [1, 2, 3, 4, 5])
+        from kotcollections import KotSet
+        self.assertIsInstance(union, KotSet)
+        self.assertEqual(set(union.to_list()), {1, 2, 3, 4, 5})
 
     def test_plus(self):
         lst = KotList([1, 2, 3])
@@ -1986,11 +1990,13 @@ class TestKotListNewAPIs(unittest.TestCase):
     """Test newly implemented APIs"""
     
     def test_subtract(self):
-        """Test subtract method"""
+        """Test subtract method (returns KotSet)"""
         lst1 = KotList([1, 2, 3, 4, 5])
         lst2 = [2, 4]
         result = lst1.subtract(lst2)
-        self.assertEqual(result.to_list(), [1, 3, 5])
+        from kotcollections import KotSet
+        self.assertIsInstance(result, KotSet)
+        self.assertEqual(set(result.to_list()), {1, 3, 5})
         
         # Test with empty list
         empty = KotList()
