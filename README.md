@@ -202,6 +202,13 @@ Note: Both naming styles (`_null` and `_none`) can be used interchangeably based
 
 For detailed documentation of all available methods, please refer to the [API Reference](docs/API_REFERENCE.md).
 
+## What's New
+
+- Added KotList.subtract(other) as an alias of minus(other) for set-style difference operations (returns KotList)
+- Added KotList.slice_range(range) delegating to slice(indices); note that `slice()` accepts any iterable of indices including `range`
+- Added KotMutableList.remove_if(predicate) and replace_all(operator)
+- Updated docs with notes that KotList.intersect/union/subtract return KotList (not Set) to preserve order and Python list semantics
+
 ## Performance Considerations
 
 - `KotList` internally uses Python's standard list, so basic operation performance is equivalent to standard lists

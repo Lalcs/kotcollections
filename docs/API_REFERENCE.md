@@ -549,6 +549,8 @@ print(by_length.to_list())  # ['a', 'aa', 'ccc']
 
 Returns the intersection of two lists.
 
+Note: Unlike Kotlin's Set-returning variant, this library returns a KotList (to preserve order and Python list semantics).
+
 ```python
 lst1 = KotList([1, 2, 3, 4, 5])
 lst2 = [3, 4, 5, 6, 7]
@@ -559,6 +561,8 @@ print(common.to_list())  # [3, 4, 5]
 #### union(other)
 
 Returns the union of two lists.
+
+Note: Unlike Kotlin's Set-returning variant, this library returns a KotList (order preserved from the left-hand side; duplicates in the original left list are kept, new elements are appended once).
 
 ```python
 lst1 = KotList([1, 2, 3])
@@ -590,6 +594,8 @@ print(minus_one.to_list())  # [1, 3]
 #### subtract(other)
 
 Returns a list containing all elements of the original list except the elements contained in the given other collection.
+
+Note: This returns a KotList. It is functionally equivalent to `minus(other)` and provided as a set-difference style alias.
 
 ```python
 lst1 = KotList([1, 2, 3, 4, 5])
