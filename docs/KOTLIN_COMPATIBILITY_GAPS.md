@@ -19,31 +19,31 @@
 
 ### 1) KotList.minus の削除挙動（優先度: 高）
 - 現状:
-  - 単一要素版: 最初の1個だけ削除
+  - 単一要素版: 最初の1個だけ削除 ✓ Kotlin準拠
   - Iterable版: 集合差（set化）で全出現を削除（多重度を無視）
 - Kotlin期待:
-  - 単一要素版: 対象と等しい全要素を削除
-  - Iterable版: 出現回数ベースの多重度削減（マルチセット差）
+  - 単一要素版: 最初にマッチした要素のみ削除（現状と同じ）
+  - Iterable版: 渡されたコレクション内の各要素について、最初の出現を削除
 - 例:
 ```python path=null start=null
 # Kotlin
-listOf(1,2,2,3).minus(2)          # [1,3]
+listOf(1,2,2,3).minus(2)          # [1,2,3]
 listOf(1,2,2,3).minus(listOf(2))  # [1,2,3]
 listOf(1,2,2,3).minus(listOf(2,2))# [1,3]
 
 # 現状
-KotList([1,2,2,3]).minus(2).to_list()       # [1,2,3]
-KotList([1,2,2,3]).minus([2]).to_list()     # [1,3]
-KotList([1,2,2,3]).minus([2,2]).to_list()   # [1,3]
+KotList([1,2,2,3]).minus(2).to_list()       # [1,2,3] ✓ Kotlin準拠
+KotList([1,2,2,3]).minus([2]).to_list()     # [1,3]   ✗ Kotlin期待は[1,2,3]
+KotList([1,2,2,3]).minus([2,2]).to_list()   # [1,3]   ✓ Kotlin準拠
 ```
 - 是正案:
-  - 単一要素: 全削除に変更
-  - Iterable版: collections.Counter などを用いて多重度差を実装
+  - 単一要素: 変更不要（既にKotlin準拠）
+  - Iterable版: 各要素の最初の出現のみを削除する実装に変更
 - 影響: 互換性改善。既存の一部テスト・ユーザーコードに影響の可能性あり（破壊的ではないが挙動変化）。
 - 対象ファイル: kotcollections/kot_list.py（minus）
 
 ### 2) KotSet.map / filter / flat_map / map_indexed / flat_map_indexed の返却型（優先度: 高）
-- 現状: KotSet を返す（重複が消える・順序非保証）
+- 現状: KotSet を返す（重複が消える・順序非保証）✗
 - Kotlin期待: List を返す（Iterable拡張のため）
 - 例:
 ```python path=null start=null
@@ -59,15 +59,15 @@ KotSet([1,2,3]).map(lambda x: x % 2).to_list()  # [0,1] など
 - 対象ファイル: kotcollections/kot_set.py（map/filter/flat_map 系）
 
 ### 3) KotSet.group_by の値型（優先度: 中〜高）
-- 現状: KotMap<K, KotSet<T>>
+- 現状: KotMap<K, KotSet<T>> ✗
 - Kotlin期待: Map<K, List<T>>
 - 是正案: KotList を値として返すよう変更
 - 影響: 破壊的変更。テスト・ドキュメント更新要。
 - 対象ファイル: kotcollections/kot_set.py（group_by）
 
 ### 4) empty の average の扱い（優先度: 中）
-- 現状: KotList.average() / KotSet.average(selector) は空で ValueError を送出
-- Kotlin期待: NaN（Double.NaN）
+- 現状: KotList.average() / KotSet.average(selector) は空で ValueError を送出 ✗
+- Kotlin期待: Double.NaN を返す
 - 是正案:
   - Pythonでは float('nan') を返す
   - 互換性を優先しない場合は現状のまま＋ドキュメントに相違を明記
@@ -94,21 +94,22 @@ KotSet([1,2,3]).map(lambda x: x % 2).to_list()  # [0,1] など
 - 是正案: 現状維持（利便性向上）。Kotlinとの差分としてドキュメント化。
 
 ## 既にKotlin準拠化済み（2025-09-04）
-- KotList.intersect/union/subtract は KotSet を返すように修正済み（Kotlin準拠）。
+- KotList.intersect/union/subtract は KotSet を返すように修正済み（Kotlin準拠）✓
 
 ## 推奨修正順（提案）
-1. KotList.minus の多重度仕様（単一・Iterable）をKotlin準拠に修正（破壊性: 中）
+1. KotList.minus のIterable版をKotlin準拠に修正（破壊性: 中）- 単一要素版は既に準拠
 2. KotSet.map/filter 系の返却型を KotList へ（破壊性: 高）
 3. KotSet.group_by の値型を KotList へ（破壊性: 中）
-4. average(empty) を NaN へ（破壊性: 低〜中）
+4. average(empty) を float('nan') へ（破壊性: 低〜中）
 5. 例外型はドキュメント明記 or ラッパ導入（任意）
 
 ## テスト更新方針（要点）
-- minus: 多重度テスト（単一・複数・同値2個以上・順序保持）
+- minus: Iterable版の修正テスト（各要素の最初の出現のみ削除）
 - KotSet.map/filter: 返却型が KotList であること、重複の保持、順序の検証
 - KotSet.group_by: 値が KotList であること、要素数・内容を検証
 - average: 空入力で math.isnan を検証
 
 ## 備考
 - Python流の例外・動的型の文脈に最適化した現行挙動も一定の合理性はありますが、「Kotlin互換」を明確な目標とする場合は本レポートの修正案が有効です。
+- KotList.minus の単一要素版は既にKotlin準拠であることが確認されました。
 
