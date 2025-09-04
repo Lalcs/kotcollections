@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from kotcollections import KotList, KotMap
+from kotcollections import KotList, KotMap, KotSet
 
 
 class TestKotListBasics(unittest.TestCase):
@@ -1980,3 +1980,49 @@ class TestKotListTypeSpecification(unittest.TestCase):
         # Without cache, they won't be the exact same type object, but functionally equivalent
         self.assertEqual(type(mlist1).__name__, type(mlist2).__name__)
         self.assertEqual(type(mlist1).__name__, "KotMutableList[Animal]")
+
+
+class TestKotListNewAPIs(unittest.TestCase):
+    """Test newly implemented APIs"""
+    
+    def test_subtract(self):
+        """Test subtract method"""
+        lst1 = KotList([1, 2, 3, 4, 5])
+        lst2 = [2, 4]
+        result = lst1.subtract(lst2)
+        self.assertEqual(result.to_list(), [1, 3, 5])
+        
+        # Test with empty list
+        empty = KotList()
+        result_empty = empty.subtract([1, 2])
+        self.assertEqual(result_empty.to_list(), [])
+        
+        # Test with KotSet
+        kot_set = KotSet([2, 4, 6])
+        result_set = lst1.subtract(kot_set)
+        self.assertEqual(result_set.to_list(), [1, 3, 5])
+        
+        # Test with KotMap values
+        kot_map = KotMap({"a": 2, "b": 4})
+        result_map = lst1.subtract(kot_map)
+        self.assertEqual(result_map.to_list(), [1, 3, 5])
+    
+    def test_slice_range(self):
+        """Test slice_range method"""
+        lst = KotList([10, 20, 30, 40, 50])
+        
+        # Test basic range
+        result = lst.slice_range(range(1, 4))
+        self.assertEqual(result.to_list(), [20, 30, 40])
+        
+        # Test with step
+        result_step = lst.slice_range(range(0, 5, 2))
+        self.assertEqual(result_step.to_list(), [10, 30, 50])
+        
+        # Test empty range
+        result_empty = lst.slice_range(range(0, 0))
+        self.assertEqual(result_empty.to_list(), [])
+        
+        # Test out of bounds should raise error
+        with self.assertRaises(IndexError):
+            lst.slice_range(range(0, 10))

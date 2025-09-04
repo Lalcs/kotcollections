@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking@latest"
+      ],
+      "env": {
+        "PATH": "/Users/vatis/Library/Caches/fnm_multishells/29963_1752579212652/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "env": {
+        "PATH": "/Users/vatis/Library/Caches/fnm_multishells/29963_1752579212652/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
+    },
+    "basic-memory": {
+      "command": "uvx",
+      "args": [
+        "basic-memory",
+        "mcp"
+      ]
+    }
+  }
+}

@@ -617,3 +617,66 @@ class TestKotMutableListTypeSpecification(unittest.TestCase):
         # Verify we can still add correct types
         mutable_set.add(Dog("Rex"))
         self.assertEqual(mutable_set.size, 2)
+
+
+class TestKotMutableListNewAPIs(unittest.TestCase):
+    """Test newly implemented APIs"""
+    
+    def test_remove_if(self):
+        """Test remove_if method"""
+        lst = KotMutableList([1, 2, 3, 4, 5, 6])
+        
+        # Remove even numbers
+        result = lst.remove_if(lambda x: x % 2 == 0)
+        self.assertTrue(result)  # Should return True because elements were removed
+        self.assertEqual(lst.to_list(), [1, 3, 5])
+        
+        # Try to remove numbers > 10 (none exist)
+        result = lst.remove_if(lambda x: x > 10)
+        self.assertFalse(result)  # Should return False because no elements were removed
+        self.assertEqual(lst.to_list(), [1, 3, 5])
+        
+        # Remove all elements
+        result = lst.remove_if(lambda x: True)
+        self.assertTrue(result)
+        self.assertEqual(lst.to_list(), [])
+        self.assertTrue(lst.is_empty())
+        
+        # Test on empty list
+        result = lst.remove_if(lambda x: x > 0)
+        self.assertFalse(result)
+        self.assertEqual(lst.to_list(), [])
+    
+    def test_replace_all(self):
+        """Test replace_all method"""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        
+        # Double all elements
+        lst.replace_all(lambda x: x * 2)
+        self.assertEqual(lst.to_list(), [2, 4, 6, 8, 10])
+        
+        # Square all elements
+        lst.replace_all(lambda x: x ** 2)
+        self.assertEqual(lst.to_list(), [4, 16, 36, 64, 100])
+        
+        # Test with strings
+        str_lst = KotMutableList(['hello', 'world', 'test'])
+        str_lst.replace_all(lambda s: s.upper())
+        self.assertEqual(str_lst.to_list(), ['HELLO', 'WORLD', 'TEST'])
+        
+        # Test on empty list
+        empty = KotMutableList()
+        empty.replace_all(lambda x: x * 10)
+        self.assertEqual(empty.to_list(), [])
+    
+    def test_replace_all_type_checking(self):
+        """Test that replace_all enforces type checking"""
+        lst = KotMutableList([1, 2, 3])
+        
+        # Valid transformation - same type
+        lst.replace_all(lambda x: x + 10)
+        self.assertEqual(lst.to_list(), [11, 12, 13])
+        
+        # Invalid transformation - different type
+        with self.assertRaises(TypeError):
+            lst.replace_all(lambda x: str(x))  # Converting int to str should fail

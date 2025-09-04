@@ -628,6 +628,20 @@ class KotList(Generic[T]):
                 seen.add(element)
         return KotList(result)
 
+    def subtract(self, other: Iterable[T]) -> 'KotList[T]':
+        """Returns a list containing all elements of the original list except the elements contained in the given other collection."""
+        # Support KotSet and KotMap explicitly
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        
+        if isinstance(other, KotSet):
+            to_remove = set(other)
+        elif isinstance(other, KotMap):
+            to_remove = set(other.values)
+        else:
+            to_remove = set(other)
+        return KotList([element for element in self._elements if element not in to_remove])
+
     def plus(self, element: Union[T, Iterable[T]]) -> 'KotList[T]':
         # Support KotSet and KotMap explicitly
         from kotcollections.kot_set import KotSet
@@ -891,6 +905,16 @@ class KotList(Generic[T]):
     # Sublist retrieval methods
     def slice(self, indices: Iterable[int]) -> 'KotList[T]':
         """Returns a list containing elements at specified indices."""
+        result = []
+        for index in indices:
+            if 0 <= index < self.size:
+                result.append(self._elements[index])
+            else:
+                raise IndexError(f"Index {index} out of bounds for list of size {self.size}")
+        return KotList(result)
+
+    def slice_range(self, indices: range) -> 'KotList[T]':
+        """Returns a list containing elements at specified range of indices."""
         result = []
         for index in indices:
             if 0 <= index < self.size:

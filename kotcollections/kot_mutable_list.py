@@ -168,6 +168,19 @@ class KotMutableList(KotList[T]):
         self._elements = [e for e in self._elements if e in elements_set]
         return self.size < initial_size
 
+    def remove_if(self, filter_predicate: Callable[[T], bool]) -> bool:
+        """Removes all elements that satisfy the given predicate. Returns true if any elements were removed."""
+        initial_size = self.size
+        self._elements = [e for e in self._elements if not filter_predicate(e)]
+        return self.size < initial_size
+
+    def replace_all(self, operator: Callable[[T], T]) -> None:
+        """Replaces each element of this list with the result of applying the operator to that element."""
+        for i in range(self.size):
+            new_element = operator(self._elements[i])
+            self._check_type(new_element)
+            self._elements[i] = new_element
+
     def clear(self) -> None:
         self._elements.clear()
 
