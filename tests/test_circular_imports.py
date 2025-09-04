@@ -76,10 +76,10 @@ class TestCircularImports(unittest.TestCase):
         # Test methods that return KotMap
         grouped = s.group_by(lambda x: x % 2)
         self.assertEqual(len(grouped), 2)
-        # Values in group_by are KotSet
+        # Values in group_by are KotList (Kotlin-compatible)
         for key in grouped.keys:
             values = grouped.get(key)
-            self.assertIsInstance(values, KotSet)
+            self.assertIsInstance(values, KotList)  # Kotlin-compatible: group_by returns List values
     
     def test_kot_map_with_other_collections(self):
         """Test KotMap methods with other collection types."""

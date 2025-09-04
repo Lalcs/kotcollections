@@ -290,9 +290,12 @@ class TestKotSetTransformation(unittest.TestCase):
         """Test flat_map with lists."""
         s = KotSet(["hello", "world"])
         flat_mapped = s.flat_map(lambda x: list(x))
-        # Should contain unique characters
+        # Kotlin-compatible: flat_map returns List, preserving duplicates
+        # "hello" -> ['h','e','l','l','o'], "world" -> ['w','o','r','l','d']
+        self.assertIsInstance(flat_mapped, KotList)
+        self.assertEqual(flat_mapped.size, 10)  # Total characters including duplicates
+        # Check all unique characters are present
         expected = {'h', 'e', 'l', 'o', 'w', 'r', 'd'}
-        self.assertEqual(flat_mapped.size, len(expected))
         for char in expected:
             self.assertTrue(char in flat_mapped)
 
@@ -395,8 +398,9 @@ class TestKotSetAggregation(unittest.TestCase):
         self.assertEqual(s.average(lambda x: x * 2), 6.0)
 
         empty = KotSet()
-        with self.assertRaises(ValueError):
-            empty.average(lambda x: x)
+        import math
+        result = empty.average(lambda x: x)
+        self.assertTrue(math.isnan(result))  # Kotlin-compatible: returns NaN for empty
 
     def test_max_or_null(self):
         """Test max_or_null operation."""
@@ -513,8 +517,8 @@ class TestKotSetCollectionOps(unittest.TestCase):
         evens = groups.get(0)
         odds = groups.get(1)
 
-        self.assertIsInstance(evens, KotSet)
-        self.assertIsInstance(odds, KotSet)
+        self.assertIsInstance(evens, KotList)  # Kotlin-compatible: group_by returns List values
+        self.assertIsInstance(odds, KotList)   # Kotlin-compatible: group_by returns List values
         self.assertEqual(evens.size, 3)
         self.assertTrue(2 in evens and 4 in evens and 6 in evens)
 

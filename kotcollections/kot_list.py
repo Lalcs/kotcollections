@@ -493,7 +493,7 @@ class KotList(Generic[T]):
 
     def average(self) -> float:
         if self.is_empty():
-            raise ValueError("Cannot compute average of empty list")
+            return float('nan')  # Kotlin-compatible: returns NaN for empty collections
         return sum(self._elements) / self.size
 
     def sorted(self, key: Optional[Callable[[T], Any]] = None, reverse: bool = False) -> 'KotList[T]':
@@ -659,13 +659,19 @@ class KotList(Generic[T]):
         from kotcollections.kot_map import KotMap
         
         if isinstance(element, Iterable) and not isinstance(element, (str, bytes)):
+            # Kotlin-compatible: Remove first occurrence of each element in the iterable
+            result = self._elements.copy()
             if isinstance(element, KotSet):
-                to_remove = set(element)
+                elements_to_remove = list(element)
             elif isinstance(element, KotMap):
-                to_remove = set(element.values)
+                elements_to_remove = list(element.values)
             else:
-                to_remove = set(element)
-            return KotList([e for e in self._elements if e not in to_remove])
+                elements_to_remove = list(element)
+            
+            for item in elements_to_remove:
+                if item in result:
+                    result.remove(item)  # Removes only the first occurrence
+            return KotList(result)
         else:
             result = self._elements.copy()
             if element in result:
