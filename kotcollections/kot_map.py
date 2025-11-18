@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TypeVar, Generic, Callable, Optional, Dict, Iterator, Any, Tuple, List, Set, Type, TYPE_CHECKING
 
+from kotcollections.type_checker import TypeChecker
+
 if TYPE_CHECKING:
     from kotcollections import KotMutableMap, KotList, KotSet
 
@@ -46,14 +48,14 @@ class KotMap(Generic[K, V]):
     @classmethod
     def __class_getitem__(cls, types: Tuple[Type[K], Type[V]]) -> Type['KotMap[K, V]']:
         """Enable KotMap[KeyType, ValueType]() syntax for type specification.
-        
+
         Example:
             animals_by_name = KotMap[str, Animal]()
             animals_by_name.put("Buddy", Dog("Buddy"))
             animals_by_name.put("Whiskers", Cat("Whiskers"))
         """
         key_type, value_type = types
-        
+
         class TypedKotMap(cls):
             def __init__(self, elements=None):
                 # Only set types if they are actual types, not type variables
@@ -71,99 +73,84 @@ class KotMap(Generic[K, V]):
                     else:  # Iterator
                         for key, value in elements:
                             self._put_with_type_check(key, value)
-        
-        # Set a meaningful name for debugging
-        TypedKotMap.__name__ = f"{cls.__name__}[{key_type.__name__}, {value_type.__name__}]"
-        TypedKotMap.__qualname__ = f"{cls.__qualname__}[{key_type.__name__}, {value_type.__name__}]"
-        
+
+        # Set a meaningful name for debugging (handle cases where __name__ might not exist)
+        key_type_name = getattr(key_type, '__name__', str(key_type))
+        value_type_name = getattr(value_type, '__name__', str(value_type))
+        TypedKotMap.__name__ = f"{cls.__name__}[{key_type_name}, {value_type_name}]"
+        TypedKotMap.__qualname__ = f"{cls.__qualname__}[{key_type_name}, {value_type_name}]"
+
         return TypedKotMap
 
     @classmethod
     def of_type(cls, key_type: Type[K], value_type: Type[V], elements: Optional[Dict[K, V] | List[Tuple[K, V]] | Iterator[Tuple[K, V]]] = None) -> 'KotMap[K, V]':
         """Create a KotMap with specific key and value types.
-        
-        This is useful when you want to create a map with parent types
-        but only have instances of child types.
-        
+
+        This method is particularly useful when you want to create a map with parent types
+        but only have instances of child types. It enables runtime type checking to ensure
+        all keys and values are instances of the specified types or their subclasses.
+
+        Type Checking Behavior:
+            - Accepts exact type matches (Dog value in Animal map)
+            - Accepts subclass instances (Dog value in Animal map)
+            - Rejects parent class instances (Animal value in Dog map)
+            - Rejects unrelated types (Cat value in Dog map)
+
         Args:
-            key_type: The type of keys this map will contain
-            value_type: The type of values this map will contain
-            elements: Optional initial elements
-            
+            key_type: The type of keys this map will contain. All keys
+                     must be instances of this type or its subclasses.
+            value_type: The type of values this map will contain. All values
+                       must be instances of this type or its subclasses.
+            elements: Optional initial elements. Each key-value pair will be type-checked.
+
         Returns:
             A new KotMap instance with the specified types
-            
-        Example:
-            animals_by_name = KotMap.of_type(str, Animal, [("Buddy", Dog("Buddy")), ("Whiskers", Cat("Whiskers"))])
-            # or empty map
-            animals_by_name = KotMap.of_type(str, Animal)
-            animals_by_name.put("Max", Dog("Max"))
+
+        Raises:
+            TypeError: If any key or value is not an instance of its respective type
+
+        Examples:
+            >>> # Create empty typed map
+            >>> animals_by_name = KotMap.of_type(str, Animal)
+
+            >>> # Create with mixed subclass values
+            >>> animals_by_name = KotMap.of_type(str, Animal,
+            ...     [("Buddy", Dog("Buddy")), ("Whiskers", Cat("Whiskers"))])
+
+            >>> # Equivalent to __class_getitem__ syntax
+            >>> animals_by_name = KotMap[str, Animal](
+            ...     [("Buddy", Dog("Buddy")), ("Whiskers", Cat("Whiskers"))])
         """
         # Use __class_getitem__ to create the same dynamic subclass
         typed_class = cls[key_type, value_type]
         return typed_class(elements)
 
     def _put_with_type_check(self, key: K, value: V) -> None:
-        """Add a key-value pair with type checking."""
-        # Skip type checking if key_type or value_type is a type variable or not a real type
-        if (self._key_type is not None and not isinstance(self._key_type, type)) or \
-           (self._value_type is not None and not isinstance(self._value_type, type)):
+        """Add a key-value pair with type checking.
+
+        This method performs runtime type checking for both keys and values to ensure type safety.
+        It uses the TypeChecker utility for consistent validation across all collections.
+        """
+        # Handle type inference for first element
+        if self._key_type is None and key is not None:
+            self._key_type = TypeChecker.infer_element_type(key, KotMap)
+
+        if self._value_type is None and value is not None:
+            self._value_type = TypeChecker.infer_element_type(value, KotMap)
+
+        # Skip detailed type checking if types are not real types
+        if (TypeChecker.should_skip_type_checking(self._key_type) and
+            TypeChecker.should_skip_type_checking(self._value_type)):
             self._elements[key] = value
             return
-            
-        # Set key type
-        if self._key_type is None and key is not None:
-            self._key_type = type(key) if not isinstance(key, KotMap) else KotMap
 
-        # Set value type
-        if self._value_type is None and value is not None:
-            self._value_type = type(value) if not isinstance(value, KotMap) else KotMap
+        # Validate key type (only if not None, as None keys may be allowed)
+        if key is not None and not TypeChecker.should_skip_type_checking(self._key_type):
+            TypeChecker.validate_element(key, self._key_type, "KotMap key")
 
-        # Check key type
-        if key is not None and self._key_type is not None:
-            if isinstance(key, KotMap) and self._key_type == KotMap:
-                pass  # KotMap keys are allowed
-            elif not isinstance(key, KotMap):
-                # Check if key is an instance of the expected type
-                if isinstance(key, self._key_type):
-                    pass  # Direct instance check passed
-                # Special handling for __class_getitem__ types (e.g., KotList[Holiday])
-                elif (hasattr(self._key_type, '__base__') and 
-                      hasattr(self._key_type, '__name__') and 
-                      '[' in self._key_type.__name__ and
-                      isinstance(key, self._key_type.__base__)):
-                    # Check if the key has matching element type for KotList/KotSet/KotMap types
-                    if hasattr(key, '_element_type') and hasattr(self._key_type, '__new__'):
-                        # Extract expected element type from the __class_getitem__ type
-                        # This is a more strict check for collection types
-                        pass
-                    else:
-                        pass
-                else:
-                    raise TypeError(f"All keys must be of type {self._key_type.__name__}, got {type(key).__name__}")
-
-        # Check value type
-        if value is not None and self._value_type is not None:
-            if isinstance(value, KotMap) and self._value_type == KotMap:
-                pass  # KotMap values are allowed
-            elif not isinstance(value, KotMap):
-                # Check if value is an instance of the expected type
-                if isinstance(value, self._value_type):
-                    pass  # Direct instance check passed
-                # Special handling for __class_getitem__ types (e.g., KotList[Holiday])
-                elif (hasattr(self._value_type, '__base__') and 
-                      hasattr(self._value_type, '__name__') and 
-                      '[' in self._value_type.__name__ and
-                      isinstance(value, self._value_type.__base__)):
-                    # Check if the value has matching element type for KotList/KotSet/KotMap types
-                    if hasattr(value, '_element_type') and hasattr(self._value_type, '__new__'):
-                        # Extract expected element type from the __class_getitem__ type
-                        # This is a more strict check for collection types
-                        pass
-                    else:
-                        pass
-                else:
-                    raise TypeError(f"All values must be of type {self._value_type.__name__}, got {type(value).__name__}")
+        # Validate value type (only if not None, as None values may be allowed)
+        if value is not None and not TypeChecker.should_skip_type_checking(self._value_type):
+            TypeChecker.validate_element(value, self._value_type, "KotMap value")
 
         self._elements[key] = value
 
@@ -508,10 +495,20 @@ class KotMap(Generic[K, V]):
         return self.minus(key)
 
     def __hash__(self) -> int:
-        """Return hash of the map."""
+        """Return hash of the map.
+
+        This method caches the hash value since KotMap is immutable.
+        It handles both sortable and unsortable keys gracefully.
+        """
         # Since KotMap is immutable, we can cache the hash
         if not hasattr(self, '_cached_hash'):
-            items = tuple(sorted(self._elements.items()))
+            try:
+                # Try to sort items for consistent hashing
+                items = tuple(sorted(self._elements.items()))
+            except TypeError:
+                # Keys are not sortable (e.g., dict, KotList), use frozenset instead
+                # frozenset doesn't preserve order but provides consistent hashing
+                items = frozenset(self._elements.items())
             self._cached_hash = hash(items)
         return self._cached_hash
 

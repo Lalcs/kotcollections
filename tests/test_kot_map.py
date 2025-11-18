@@ -734,7 +734,7 @@ class TestKotMapInheritanceTypeChecking(unittest.TestCase):
         # Should fail - adding Animal to Dog map
         with self.assertRaises(TypeError) as cm:
             mutable_map.put("animal1", self.Animal("Generic"))
-        self.assertIn("All values must be of type Dog, got Animal", str(cm.exception))
+        self.assertIn("Cannot add element of type 'Animal' to KotMap value", str(cm.exception))
     
     def test_different_subclasses_cannot_mix(self):
         """Test that different subclasses cannot be mixed."""
@@ -745,7 +745,7 @@ class TestKotMapInheritanceTypeChecking(unittest.TestCase):
         # Should fail - adding Cat to Dog map
         with self.assertRaises(TypeError) as cm:
             mutable_map.put("cat1", self.Cat("Whiskers"))
-        self.assertIn("All values must be of type Dog, got Cat", str(cm.exception))
+        self.assertIn("Cannot add element of type 'Cat' to KotMap value", str(cm.exception))
     
     def test_initialization_with_mixed_types(self):
         """Test initialization with mixed parent/subclass types."""
@@ -765,7 +765,7 @@ class TestKotMapInheritanceTypeChecking(unittest.TestCase):
                 "animal1": self.Animal("Generic")
             })
         # Note: dict ordering is preserved in Python 3.7+
-        self.assertIn("All values must be of type Dog, got Animal", str(cm.exception))
+        self.assertIn("Cannot add element of type 'Animal' to KotMap value", str(cm.exception))
     
     def test_key_type_inheritance(self):
         """Test that key type checking also works with inheritance."""
@@ -792,7 +792,7 @@ class TestKotMapInheritanceTypeChecking(unittest.TestCase):
         mutable_map2 = dog_key_map.to_kot_mutable_map()
         with self.assertRaises(TypeError) as cm:
             mutable_map2.put(HashableAnimal("Generic"), "value2")
-        self.assertIn("All keys must be of type HashableDog, got HashableAnimal", str(cm.exception))
+        self.assertIn("Cannot add element of type 'HashableAnimal' to KotMap key", str(cm.exception))
 
 
 class TestKotMapTypeSpecification(unittest.TestCase):

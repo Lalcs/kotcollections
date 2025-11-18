@@ -6,6 +6,8 @@ from collections.abc import Iterable
 from functools import reduce, cmp_to_key
 from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Dict, Union, TYPE_CHECKING, Set, Type
 
+from kotcollections.type_checker import TypeChecker
+
 T = TypeVar('T')
 R = TypeVar('R')
 K = TypeVar('K')
@@ -29,10 +31,7 @@ class KotList(Generic[T]):
             if elements_list:
                 # Set the element type based on the first element
                 first_elem = elements_list[0]
-                if isinstance(first_elem, KotList):
-                    self._element_type = KotList
-                else:
-                    self._element_type = type(first_elem)
+                self._element_type = TypeChecker.infer_element_type(first_elem, KotList)
 
                 # Check all elements have the same type
                 for elem in elements_list:
@@ -43,7 +42,7 @@ class KotList(Generic[T]):
     @classmethod
     def __class_getitem__(cls, element_type: Type[T]) -> Type['KotList[T]']:
         """Enable KotList[Type]() syntax for type specification.
-        
+
         Example:
             animals = KotList[Animal]()
             animals_mutable = animals.to_kot_mutable_list()
@@ -63,83 +62,68 @@ class KotList(Generic[T]):
                     for elem in elements:
                         self._check_type(elem)
                         self._elements.append(elem)
-        
-        # Set a meaningful name for debugging
-        TypedKotList.__name__ = f"{cls.__name__}[{element_type.__name__}]"
-        TypedKotList.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
-        
+
+        # Set a meaningful name for debugging (handle cases where __name__ might not exist)
+        type_name = getattr(element_type, '__name__', str(element_type))
+        TypedKotList.__name__ = f"{cls.__name__}[{type_name}]"
+        TypedKotList.__qualname__ = f"{cls.__qualname__}[{type_name}]"
+
         return TypedKotList
 
     @classmethod
     def of_type(cls, element_type: Type[T], elements: Optional[Iterable[T]] = None) -> 'KotList[T]':
         """Create a KotList with a specific element type.
-        
-        This is useful when you want to create a list of a parent type
-        but only have instances of child types.
-        
+
+        This method is particularly useful when you want to create a list of a parent type
+        but only have instances of child types. It enables runtime type checking to ensure
+        all elements are instances of the specified type or its subclasses.
+
+        Type Checking Behavior:
+            - Accepts exact type matches (Dog instance in Dog list)
+            - Accepts subclass instances (Dog instance in Animal list)
+            - Rejects parent class instances (Animal instance in Dog list)
+            - Rejects unrelated types (Cat instance in Dog list)
+
         Args:
-            element_type: The type of elements this list will contain
-            elements: Optional initial elements
-            
+            element_type: The type of elements this list will contain. All elements
+                         must be instances of this type or its subclasses.
+            elements: Optional initial elements. Each element will be type-checked.
+
         Returns:
             A new KotList instance with the specified element type
-            
-        Example:
-            animals = KotList.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
-            # or empty list
-            animals = KotList.of_type(Animal)
+
+        Raises:
+            TypeError: If any element in `elements` is not an instance of `element_type`
+
+        Examples:
+            >>> # Create empty typed list
+            >>> animals = KotList.of_type(Animal)
+
+            >>> # Create with mixed subclass instances
+            >>> animals = KotList.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
+
+            >>> # Equivalent to __class_getitem__ syntax
+            >>> animals = KotList[Animal]([Dog("Buddy"), Cat("Whiskers")])
         """
         # Use __class_getitem__ to create the same dynamic subclass
         typed_class = cls[element_type]
         return typed_class(elements)
 
     def _check_type(self, element: Any) -> None:
-        """Check if the element has the correct type for this list."""
-        # Skip type checking if element_type is a type variable or not a real type
-        if self._element_type is not None and not isinstance(self._element_type, type):
+        """Check if the element has the correct type for this list.
+
+        This method performs runtime type checking to ensure type safety.
+        It uses the TypeChecker utility for consistent validation across all collections.
+        """
+        # Skip type checking if not needed
+        if TypeChecker.should_skip_type_checking(self._element_type):
+            if self._element_type is None:
+                # First element sets the type
+                self._element_type = TypeChecker.infer_element_type(element, KotList)
             return
-            
-        if self._element_type is None:
-            # First element sets the type
-            if isinstance(element, KotList):
-                self._element_type = KotList
-            else:
-                self._element_type = type(element)
-        else:
-            # Type check: allow T type or KotList type
-            if isinstance(element, KotList):
-                if self._element_type == KotList:
-                    pass  # KotList type is allowed
-                # Special handling for __class_getitem__ types (e.g., KotList[Task])
-                elif (hasattr(self._element_type, '__base__') and 
-                      hasattr(self._element_type, '__name__') and 
-                      '[' in self._element_type.__name__ and
-                      isinstance(element, self._element_type.__base__)):
-                    # Check if the element has matching element type for KotList/KotSet/KotMap types
-                    if hasattr(element, '_element_type') and hasattr(self._element_type, '__new__'):
-                        # Extract expected element type from the __class_getitem__ type
-                        # This is a more strict check for collection types
-                        pass
-                    else:
-                        pass
-                else:
-                    type_name = getattr(self._element_type, '__name__', str(self._element_type))
-                    raise TypeError(f"Cannot add KotList to KotList[{type_name}]")
-            elif not isinstance(element, self._element_type):
-                # Check if element is an instance of the expected type
-                if isinstance(element, self._element_type):
-                    pass  # Direct instance check passed (won't reach here, but for clarity)
-                # Special handling for __class_getitem__ types
-                elif (hasattr(self._element_type, '__base__') and 
-                      hasattr(self._element_type, '__name__') and 
-                      '[' in self._element_type.__name__ and
-                      isinstance(element, self._element_type.__base__)):
-                    # Allow instances of base class for __class_getitem__ types
-                    pass
-                else:
-                    raise TypeError(
-                        f"Cannot add element of type '{type(element).__name__}' to KotList[{self._element_type.__name__}]"
-                    )
+
+        # Validate the element type
+        TypeChecker.validate_element(element, self._element_type, f"KotList")
 
     def __repr__(self) -> str:
         return f"KotList({self._elements})"
