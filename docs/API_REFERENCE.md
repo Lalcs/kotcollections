@@ -547,7 +547,7 @@ print(by_length.to_list())  # ['a', 'aa', 'ccc']
 
 #### intersect(other)
 
-Returns the intersection of two lists.
+Returns the intersection as a KotSet (Kotlin-compatible: returns a Set).
 
 ```python
 lst1 = KotList([1, 2, 3, 4, 5])
@@ -558,7 +558,7 @@ print(common.to_list())  # [3, 4, 5]
 
 #### union(other)
 
-Returns the union of two lists.
+Returns the union as a KotSet (Kotlin-compatible: returns a Set of distinct elements).
 
 ```python
 lst1 = KotList([1, 2, 3])
@@ -585,6 +585,49 @@ print(plus_many.to_list())  # [1, 2, 3, 4, 5]
 # Remove element
 minus_one = lst.minus(2)
 print(minus_one.to_list())  # [1, 3]
+```
+
+#### subtract(other)
+
+Returns the set-difference as a KotSet (Kotlin-compatible).
+
+Tip: If you want list semantics (order preserved, duplicates allowed), use `minus(other)` instead.
+
+```python
+lst1 = KotList([1, 2, 3, 4, 5])
+lst2 = [2, 4, 6]
+result = lst1.subtract(lst2)
+print(result.to_list())  # [1, 3, 5]
+
+# Works with KotSet and KotMap too
+from kotcollections import KotSet, KotMap
+kot_set = KotSet([1, 3])
+result2 = lst1.subtract(kot_set)
+print(result2.to_list())  # [2, 4, 5]
+
+kot_map = KotMap({"a": 2, "b": 4})
+result3 = lst1.subtract(kot_map)  # Subtracts map values
+print(result3.to_list())  # [1, 3, 5]
+```
+
+#### slice_range(indices)
+
+Returns a list containing elements at specified range of indices.
+
+```python
+lst = KotList([10, 20, 30, 40, 50])
+
+# Basic range
+result = lst.slice_range(range(1, 4))
+print(result.to_list())  # [20, 30, 40]
+
+# With step
+result_step = lst.slice_range(range(0, 5, 2))
+print(result_step.to_list())  # [10, 30, 50]
+
+# Empty range
+result_empty = lst.slice_range(range(0, 0))
+print(result_empty.to_list())  # []
 ```
 
 #### sub_list(from_index, to_index)
@@ -833,6 +876,45 @@ Removes all elements.
 lst = KotMutableList([1, 2, 3])
 lst.clear()
 print(lst.to_list())  # []
+```
+
+#### remove_if(predicate)
+
+Removes all elements that satisfy the given predicate. Returns true if any elements were removed.
+
+```python
+lst = KotMutableList([1, 2, 3, 4, 5, 6])
+
+# Remove even numbers
+result = lst.remove_if(lambda x: x % 2 == 0)
+print(result)  # True (elements were removed)
+print(lst.to_list())  # [1, 3, 5]
+
+# Try to remove numbers > 10 (none exist)
+result = lst.remove_if(lambda x: x > 10)
+print(result)  # False (no elements were removed)
+print(lst.to_list())  # [1, 3, 5] (unchanged)
+```
+
+#### replace_all(operator)
+
+Replaces each element of this list with the result of applying the operator to that element.
+
+```python
+lst = KotMutableList([1, 2, 3, 4, 5])
+
+# Double all elements
+lst.replace_all(lambda x: x * 2)
+print(lst.to_list())  # [2, 4, 6, 8, 10]
+
+# Square all elements
+lst.replace_all(lambda x: x ** 2)
+print(lst.to_list())  # [4, 16, 36, 64, 100]
+
+# With strings
+str_lst = KotMutableList(['hello', 'world', 'test'])
+str_lst.replace_all(lambda s: s.upper())
+print(str_lst.to_list())  # ['HELLO', 'WORLD', 'TEST']
 ```
 
 ### In-place Sorting

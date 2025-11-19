@@ -275,28 +275,31 @@ class KotSet(Generic[T]):
 
     # Transformation operations
 
-    def map(self, transform: Callable[[T], R]) -> 'KotSet[R]':
-        """Returns a set containing the results of applying the given transform function to each element."""
-        return KotSet(transform(element) for element in self._elements)
+    def map(self, transform: Callable[[T], R]) -> 'KotList[R]':
+        """Returns a list containing the results of applying the given transform function to each element."""
+        from kotcollections.kot_list import KotList
+        return KotList(transform(element) for element in self._elements)
 
-    def map_not_null(self, transform: Callable[[T], Optional[R]]) -> 'KotSet[R]':
-        """Returns a set containing only the non-null results of applying the given transform function."""
+    def map_not_null(self, transform: Callable[[T], Optional[R]]) -> 'KotList[R]':
+        """Returns a list containing only the non-null results of applying the given transform function."""
+        from kotcollections.kot_list import KotList
         result = []
         for element in self._elements:
             transformed = transform(element)
             if transformed is not None:
                 result.append(transformed)
-        return KotSet(result)
+        return KotList(result)
 
-    def map_not_none(self, transform: Callable[[T], Optional[R]]) -> 'KotSet[R]':
+    def map_not_none(self, transform: Callable[[T], Optional[R]]) -> 'KotList[R]':
         """Pythonic alias for map_not_null()."""
         return self.map_not_null(transform)
 
     def flat_map(
         self,
         transform: Callable[[T], Set[R] | List[R] | 'KotSet[R]' | 'KotList[R]' | 'KotMutableList[R]']
-    ) -> 'KotSet[R]':
-        """Returns a single set of all elements from results of transform function."""
+    ) -> 'KotList[R]':
+        """Returns a single list of all elements from results of transform function."""
+        from kotcollections.kot_list import KotList
         result = []
         for element in self._elements:
             transformed = transform(element)
@@ -309,17 +312,19 @@ class KotSet(Generic[T]):
                 result.extend(transformed)
             else:  # List
                 result.extend(transformed)
-        return KotSet(result)
+        return KotList(result)
 
-    def map_indexed(self, transform: Callable[[int, T], R]) -> 'KotSet[R]':
-        """Returns a set containing the results of applying the given transform function to each element and its index."""
-        return KotSet(transform(index, element) for index, element in enumerate(self._elements))
+    def map_indexed(self, transform: Callable[[int, T], R]) -> 'KotList[R]':
+        """Returns a list containing the results of applying the given transform function to each element and its index."""
+        from kotcollections.kot_list import KotList
+        return KotList(transform(index, element) for index, element in enumerate(self._elements))
 
     def flat_map_indexed(
         self,
         transform: Callable[[int, T], Set[R] | List[R] | 'KotSet[R]' | 'KotList[R]' | 'KotMutableList[R]']
-    ) -> 'KotSet[R]':
-        """Returns a single set of all elements from results of transform function applied to each element and its index."""
+    ) -> 'KotList[R]':
+        """Returns a single list of all elements from results of transform function applied to each element and its index."""
+        from kotcollections.kot_list import KotList
         result = []
         for index, element in enumerate(self._elements):
             transformed = transform(index, element)
@@ -332,29 +337,33 @@ class KotSet(Generic[T]):
                 result.extend(transformed)
             else:  # List
                 result.extend(transformed)
-        return KotSet(result)
+        return KotList(result)
 
     # Filtering operations
 
-    def filter(self, predicate: Callable[[T], bool]) -> 'KotSet[T]':
-        """Returns a set containing only elements matching the given predicate."""
-        return KotSet(element for element in self._elements if predicate(element))
+    def filter(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
+        """Returns a list containing only elements matching the given predicate."""
+        from kotcollections.kot_list import KotList
+        return KotList(element for element in self._elements if predicate(element))
 
-    def filter_not(self, predicate: Callable[[T], bool]) -> 'KotSet[T]':
-        """Returns a set containing only elements not matching the given predicate."""
-        return KotSet(element for element in self._elements if not predicate(element))
+    def filter_not(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
+        """Returns a list containing only elements not matching the given predicate."""
+        from kotcollections.kot_list import KotList
+        return KotList(element for element in self._elements if not predicate(element))
 
-    def filter_not_null(self) -> 'KotSet[T]':
-        """Returns a set containing all elements that are not null."""
-        return KotSet(element for element in self._elements if element is not None)
+    def filter_not_null(self) -> 'KotList[T]':
+        """Returns a list containing all elements that are not null."""
+        from kotcollections.kot_list import KotList
+        return KotList(element for element in self._elements if element is not None)
 
-    def filter_not_none(self) -> 'KotSet[T]':
+    def filter_not_none(self) -> 'KotList[T]':
         """Pythonic alias for filter_not_null()."""
         return self.filter_not_null()
 
-    def filter_is_instance(self, klass: Type[R]) -> 'KotSet[R]':
-        """Returns a set containing all elements that are instances of the specified class."""
-        return KotSet(element for element in self._elements if isinstance(element, klass))
+    def filter_is_instance(self, klass: Type[R]) -> 'KotList[R]':
+        """Returns a list containing all elements that are instances of the specified class."""
+        from kotcollections.kot_list import KotList
+        return KotList(element for element in self._elements if isinstance(element, klass))
 
     # Aggregation operations
 
@@ -388,7 +397,7 @@ class KotSet(Generic[T]):
     def average(self, selector: Callable[[T], float | int]) -> float:
         """Returns the average of all values produced by selector function."""
         if self.is_empty():
-            raise ValueError("Set is empty")
+            return float('nan')  # Kotlin-compatible: returns NaN for empty collections
         values = [selector(element) for element in self._elements]
         return sum(values) / len(values)
 
@@ -454,14 +463,15 @@ class KotSet(Generic[T]):
         """Pythonic alias for reduce_or_null()."""
         return self.reduce_or_null(operation)
 
-    def group_by(self, key_selector: Callable[[T], R]) -> 'KotMap[R, KotSet[T]]':
+    def group_by(self, key_selector: Callable[[T], R]) -> 'KotMap[R, KotList[T]]':
         """Groups elements by the key returned by the given key_selector function."""
         from kotcollections.kot_map import KotMap
+        from kotcollections.kot_list import KotList
         groups = defaultdict(list)
         for element in self._elements:
             key = key_selector(element)
             groups[key].append(element)
-        return KotMap({key: KotSet(elements) for key, elements in groups.items()})
+        return KotMap({key: KotList(elements) for key, elements in groups.items()})
 
     def group_by_to(
         self,

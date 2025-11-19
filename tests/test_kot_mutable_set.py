@@ -505,8 +505,8 @@ class TestKotMutableSetInheritedTransformations(unittest.TestCase):
 
         evens = groups.get(0)
         odds = groups.get(1)
-        self.assertIsInstance(evens, KotSet)
-        self.assertIsInstance(odds, KotSet)
+        self.assertIsInstance(evens, KotList)  # Kotlin-compatible: group_by returns List values
+        self.assertIsInstance(odds, KotList)   # Kotlin-compatible: group_by returns List values
 
         self.assertEqual(evens.size, 3)
         self.assertEqual(odds.size, 3)

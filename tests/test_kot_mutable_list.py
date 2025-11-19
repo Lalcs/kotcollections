@@ -617,3 +617,294 @@ class TestKotMutableListTypeSpecification(unittest.TestCase):
         # Verify we can still add correct types
         mutable_set.add(Dog("Rex"))
         self.assertEqual(mutable_set.size, 2)
+
+
+class TestKotMutableListNewAPIs(unittest.TestCase):
+    """Test newly implemented APIs"""
+    
+    def test_remove_if(self):
+        """Test remove_if method"""
+        lst = KotMutableList([1, 2, 3, 4, 5, 6])
+        
+        # Remove even numbers
+        result = lst.remove_if(lambda x: x % 2 == 0)
+        self.assertTrue(result)  # Should return True because elements were removed
+        self.assertEqual(lst.to_list(), [1, 3, 5])
+        
+        # Try to remove numbers > 10 (none exist)
+        result = lst.remove_if(lambda x: x > 10)
+        self.assertFalse(result)  # Should return False because no elements were removed
+        self.assertEqual(lst.to_list(), [1, 3, 5])
+        
+        # Remove all elements
+        result = lst.remove_if(lambda x: True)
+        self.assertTrue(result)
+        self.assertEqual(lst.to_list(), [])
+        self.assertTrue(lst.is_empty())
+        
+        # Test on empty list
+        result = lst.remove_if(lambda x: x > 0)
+        self.assertFalse(result)
+        self.assertEqual(lst.to_list(), [])
+    
+    def test_replace_all(self):
+        """Test replace_all method"""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        
+        # Double all elements
+        lst.replace_all(lambda x: x * 2)
+        self.assertEqual(lst.to_list(), [2, 4, 6, 8, 10])
+        
+        # Square all elements
+        lst.replace_all(lambda x: x ** 2)
+        self.assertEqual(lst.to_list(), [4, 16, 36, 64, 100])
+        
+        # Test with strings
+        str_lst = KotMutableList(['hello', 'world', 'test'])
+        str_lst.replace_all(lambda s: s.upper())
+        self.assertEqual(str_lst.to_list(), ['HELLO', 'WORLD', 'TEST'])
+        
+        # Test on empty list
+        empty = KotMutableList()
+        empty.replace_all(lambda x: x * 10)
+        self.assertEqual(empty.to_list(), [])
+    
+    def test_replace_all_type_checking(self):
+        """Test that replace_all enforces type checking"""
+        lst = KotMutableList([1, 2, 3])
+        
+        # Valid transformation - same type
+        lst.replace_all(lambda x: x + 10)
+        self.assertEqual(lst.to_list(), [11, 12, 13])
+        
+        # Invalid transformation - different type
+        with self.assertRaises(TypeError):
+            lst.replace_all(lambda x: str(x))  # Converting int to str should fail
+
+
+class TestKotMutableListIterator(unittest.TestCase):
+    def test_list_iterator_creation(self):
+        """Test creating a list iterator."""
+        from kotcollections.kot_mutable_list import MutableListIterator
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator()
+        self.assertIsInstance(it, MutableListIterator)
+
+    def test_iterator_next(self):
+        """Test iterator's next() method."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator()
+
+        self.assertTrue(it.has_next())
+        self.assertEqual(it.next(), 1)
+        self.assertEqual(it.next(), 2)
+        self.assertEqual(it.next(), 3)
+        self.assertTrue(it.has_next())
+
+    def test_iterator_previous(self):
+        """Test iterator's previous() method."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator()
+
+        # Move forward first
+        it.next()
+        it.next()
+        it.next()
+
+        # Now go backwards
+        self.assertTrue(it.has_previous())
+        self.assertEqual(it.previous(), 3)
+        self.assertEqual(it.previous(), 2)
+        self.assertTrue(it.has_previous())
+        self.assertEqual(it.previous(), 1)
+        self.assertFalse(it.has_previous())
+
+    def test_iterator_index_methods(self):
+        """Test next_index() and previous_index() methods."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator()
+
+        self.assertEqual(it.next_index(), 0)
+        self.assertEqual(it.previous_index(), -1)
+
+        it.next()
+        self.assertEqual(it.next_index(), 1)
+        self.assertEqual(it.previous_index(), 0)
+
+        it.next()
+        it.next()
+        self.assertEqual(it.next_index(), 3)
+        self.assertEqual(it.previous_index(), 2)
+
+    def test_iterator_add(self):
+        """Test adding element through iterator."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator()
+
+        it.next()  # At index 1
+        it.next()  # At index 2
+        it.add(10)  # Insert 10 at index 2
+
+        self.assertEqual(lst.to_list(), [1, 2, 10, 3, 4, 5])
+
+    def test_iterator_remove(self):
+        """Test removing element through iterator."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator()
+
+        it.next()  # Returns 1
+        it.next()  # Returns 2
+        it.remove()  # Removes 2
+
+        self.assertEqual(lst.to_list(), [1, 3, 4, 5])
+
+    def test_iterator_set(self):
+        """Test setting element through iterator."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator()
+
+        it.next()  # Returns 1
+        it.next()  # Returns 2
+        it.set(20)  # Replace 2 with 20
+
+        self.assertEqual(lst.to_list(), [1, 20, 3, 4, 5])
+
+    def test_iterator_remove_without_next(self):
+        """Test remove() fails if next() wasn't called."""
+        lst = KotMutableList([1, 2, 3])
+        it = lst.list_iterator()
+
+        with self.assertRaises(RuntimeError):
+            it.remove()
+
+    def test_iterator_set_without_next(self):
+        """Test set() fails if next() wasn't called."""
+        lst = KotMutableList([1, 2, 3])
+        it = lst.list_iterator()
+
+        with self.assertRaises(RuntimeError):
+            it.set(10)
+
+    def test_iterator_with_start_index(self):
+        """Test creating iterator with start index."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        it = lst.list_iterator(2)  # Start at index 2
+
+        self.assertEqual(it.next(), 3)
+        self.assertEqual(it.next(), 4)
+
+    def test_iterator_python_protocol(self):
+        """Test Python iterator protocol (__iter__ and __next__)."""
+        lst = KotMutableList([1, 2, 3])
+        it = lst.list_iterator()
+
+        # Test __iter__ returns self
+        self.assertIs(iter(it), it)
+
+        # Test __next__ calls next()
+        self.assertEqual(next(it), 1)
+        self.assertEqual(next(it), 2)
+        self.assertEqual(next(it), 3)
+
+        with self.assertRaises(StopIteration):
+            next(it)
+
+
+class TestKotMutableListSubList(unittest.TestCase):
+    def test_sub_list_creation(self):
+        """Test creating a sublist."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        self.assertIsInstance(sub, KotMutableList)
+        self.assertEqual(sub.to_list(), [2, 3, 4])
+
+    def test_sub_list_modification_affects_parent(self):
+        """Test modifications to sublist affect the parent list."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        sub.set(0, 10)  # Change first element of sublist
+        self.assertEqual(lst.to_list(), [1, 10, 3, 4, 5])
+
+    def test_parent_modification_affects_sub_list(self):
+        """Test modifications to parent affect the sublist."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        lst.set(2, 20)  # Change element in parent
+        self.assertEqual(sub.to_list(), [2, 20, 4])
+
+    def test_sub_list_add(self):
+        """Test adding element to sublist."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 3)
+
+        sub.add(10)
+        self.assertEqual(sub.to_list(), [2, 3, 10])
+        self.assertEqual(lst.to_list(), [1, 2, 3, 10, 4, 5])
+
+    def test_sub_list_remove_at(self):
+        """Test removing element from sublist."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        removed = sub.remove_at(1)
+        self.assertEqual(removed, 3)
+        self.assertEqual(sub.to_list(), [2, 4])
+        self.assertEqual(lst.to_list(), [1, 2, 4, 5])
+
+    def test_sub_list_clear(self):
+        """Test clearing a sublist."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        sub.clear()
+        self.assertEqual(sub.to_list(), [])
+        self.assertEqual(lst.to_list(), [1, 5])
+
+    def test_sub_list_bounds_checking(self):
+        """Test sublist bounds checking."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+
+        # Invalid indices
+        with self.assertRaises(IndexError):
+            lst.sub_list(-1, 3)
+
+        with self.assertRaises(IndexError):
+            lst.sub_list(1, 10)
+
+        with self.assertRaises(IndexError):
+            lst.sub_list(3, 2)  # from > to
+
+    def test_sub_list_getitem(self):
+        """Test accessing elements in sublist via __getitem__."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        self.assertEqual(sub[0], 2)
+        self.assertEqual(sub[1], 3)
+        self.assertEqual(sub[2], 4)
+
+        with self.assertRaises(IndexError):
+            _ = sub[3]
+
+    def test_sub_list_setitem(self):
+        """Test setting elements in sublist via __setitem__."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        sub[0] = 10
+        sub[2] = 40
+
+        self.assertEqual(sub.to_list(), [10, 3, 40])
+        self.assertEqual(lst.to_list(), [1, 10, 3, 40, 5])
+
+    def test_sub_list_delitem(self):
+        """Test deleting elements from sublist via __delitem__."""
+        lst = KotMutableList([1, 2, 3, 4, 5])
+        sub = lst.sub_list(1, 4)
+
+        del sub[1]  # Remove 3
+        self.assertEqual(sub.to_list(), [2, 4])
+        self.assertEqual(lst.to_list(), [1, 2, 4, 5])

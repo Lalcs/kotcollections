@@ -393,6 +393,31 @@ class KotList(Generic[T]):
             result[key_selector(element)] = value_transform(element)
         return KotMap(result)
 
+    def associate(self, transform: Callable[[T], Tuple[K, V]]) -> 'KotMap[K, V]':
+        """Returns a Map containing key-value pairs provided by transform function applied to elements of the given list.
+
+        If any of two pairs would have the same key the last one gets added to the map.
+
+        The operation is terminal.
+
+        Args:
+            transform: A function that transforms an element into a key-value pair (tuple).
+
+        Returns:
+            A new KotMap instance containing the key-value pairs.
+
+        Examples:
+            >>> lst = KotList(["apple", "banana", "cherry"])
+            >>> result = lst.associate(lambda s: (s[0], len(s)))
+            >>> # Returns KotMap({'a': 5, 'b': 6, 'c': 6})
+        """
+        from kotcollections.kot_map import KotMap
+        result = {}
+        for element in self._elements:
+            key, value = transform(element)
+            result[key] = value
+        return KotMap(result)
+
     def filter(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
         return KotList([element for element in self._elements if predicate(element)])
 
@@ -443,12 +468,50 @@ class KotList(Generic[T]):
     def sum_of(self, selector: Callable[[T], Union[int, float]]) -> Union[int, float]:
         return sum(selector(element) for element in self._elements)
 
+    def max(self) -> T:
+        """Returns the largest element.
+
+        Raises:
+            ValueError: If the list is empty.
+
+        Examples:
+            >>> lst = KotList([1, 5, 3, 9, 2])
+            >>> lst.max()
+            9
+            >>> KotList([]).max()
+            Traceback (most recent call last):
+                ...
+            ValueError: List is empty
+        """
+        if self.is_empty():
+            raise ValueError("List is empty")
+        return max(self._elements)
+
     def max_or_null(self) -> Optional[T]:
         return max(self._elements) if self.is_not_empty() else None
 
     def max_or_none(self) -> Optional[T]:
         """Alias for max_or_null() - more Pythonic naming."""
         return self.max_or_null()
+
+    def min(self) -> T:
+        """Returns the smallest element.
+
+        Raises:
+            ValueError: If the list is empty.
+
+        Examples:
+            >>> lst = KotList([1, 5, 3, 9, 2])
+            >>> lst.min()
+            1
+            >>> KotList([]).min()
+            Traceback (most recent call last):
+                ...
+            ValueError: List is empty
+        """
+        if self.is_empty():
+            raise ValueError("List is empty")
+        return min(self._elements)
 
     def min_or_null(self) -> Optional[T]:
         return min(self._elements) if self.is_not_empty() else None
@@ -477,7 +540,7 @@ class KotList(Generic[T]):
 
     def average(self) -> float:
         if self.is_empty():
-            raise ValueError("Cannot compute average of empty list")
+            return float('nan')  # Kotlin-compatible: returns NaN for empty collections
         return sum(self._elements) / self.size
 
     def sorted(self, key: Optional[Callable[[T], Any]] = None, reverse: bool = False) -> 'KotList[T]':
@@ -530,6 +593,32 @@ class KotList(Generic[T]):
             result[key].append(value_transform(element))
         return KotMap({k: KotList(v) for k, v in result.items()})
 
+    def grouping_by(self, key_selector: Callable[[T], K]) -> 'KotGrouping[T, K]':
+        """Creates a Grouping source from this list to be used later with one of group-and-fold operations
+        using the specified keySelector function to extract a key from each element.
+
+        A Grouping structure serves as an intermediate step in group-and-fold operations:
+        they group elements by their keys and then fold each group with some aggregating operation.
+
+        Args:
+            key_selector: A function that extracts the key from an element.
+
+        Returns:
+            A KotGrouping instance that can be used to perform group-and-fold operations.
+
+        Examples:
+            >>> lst = KotList(["apple", "apricot", "banana", "cherry", "avocado"])
+            >>> grouping = lst.grouping_by(lambda s: s[0])
+            >>> grouping.each_count()  # Returns KotMap({'a': 3, 'b': 1, 'c': 1})
+
+            >>> lst = KotList([1, 2, 3, 4, 5, 6])
+            >>> grouping = lst.grouping_by(lambda x: x % 2)
+            >>> grouping.fold(lambda k, e: 0, lambda k, acc, e: acc + e)
+            >>> # Returns KotMap({0: 12, 1: 9})
+        """
+        from kotcollections.kot_grouping import KotGrouping
+        return KotGrouping(self._elements, key_selector)
+
     def chunked(self, size: int) -> 'KotList[KotList[T]]':
         if size <= 0:
             raise ValueError("Size must be positive")
@@ -578,8 +667,8 @@ class KotList(Generic[T]):
                 result.append(element)
         return KotList(result)
 
-    def intersect(self, other: Iterable[T]) -> 'KotList[T]':
-        # Support KotSet and KotMap explicitly
+    def intersect(self, other: Iterable[T]) -> 'KotSet[T]':
+        """Returns a set containing elements present in both collections (Kotlin-compatible)."""
         from kotcollections.kot_set import KotSet
         from kotcollections.kot_map import KotMap
         
@@ -589,28 +678,38 @@ class KotList(Generic[T]):
             other_set = set(other.values)
         else:
             other_set = set(other)
-        return KotList([element for element in self._elements if element in other_set])
+        result = {element for element in self._elements if element in other_set}
+        return KotSet(result)
 
-    def union(self, other: Iterable[T]) -> 'KotList[T]':
-        # Support KotSet and KotMap explicitly
+    def union(self, other: Iterable[T]) -> 'KotSet[T]':
+        """Returns a set containing all distinct elements from both collections (Kotlin-compatible)."""
         from kotcollections.kot_set import KotSet
         from kotcollections.kot_map import KotMap
         
-        result = list(self._elements)
-        seen = set(self._elements)
-        
+        base = set(self._elements)
         if isinstance(other, KotSet):
-            iter_other = other
+            base |= set(other)
         elif isinstance(other, KotMap):
-            iter_other = other.values
+            base |= set(other.values)
         else:
-            iter_other = other
-            
-        for element in iter_other:
-            if element not in seen:
-                result.append(element)
-                seen.add(element)
-        return KotList(result)
+            base |= set(other)
+        return KotSet(base)
+
+    def subtract(self, other: Iterable[T]) -> 'KotSet[T]':
+        """Returns a set containing all elements of this list that are not in 'other' (Kotlin-compatible)."""
+        from kotcollections.kot_set import KotSet
+        from kotcollections.kot_map import KotMap
+        base = set(self._elements)
+        if hasattr(other, '__iter__'):
+            if isinstance(other, KotSet):
+                remove = set(other)
+            elif isinstance(other, KotMap):
+                remove = set(other.values)
+            else:
+                remove = set(other)
+        else:
+            remove = {other}
+        return KotSet(base - remove)
 
     def plus(self, element: Union[T, Iterable[T]]) -> 'KotList[T]':
         # Support KotSet and KotMap explicitly
@@ -633,13 +732,19 @@ class KotList(Generic[T]):
         from kotcollections.kot_map import KotMap
         
         if isinstance(element, Iterable) and not isinstance(element, (str, bytes)):
+            # Kotlin-compatible: Remove first occurrence of each element in the iterable
+            result = self._elements.copy()
             if isinstance(element, KotSet):
-                to_remove = set(element)
+                elements_to_remove = list(element)
             elif isinstance(element, KotMap):
-                to_remove = set(element.values)
+                elements_to_remove = list(element.values)
             else:
-                to_remove = set(element)
-            return KotList([e for e in self._elements if e not in to_remove])
+                elements_to_remove = list(element)
+            
+            for item in elements_to_remove:
+                if item in result:
+                    result.remove(item)  # Removes only the first occurrence
+            return KotList(result)
         else:
             result = self._elements.copy()
             if element in result:
@@ -882,6 +987,10 @@ class KotList(Generic[T]):
             else:
                 raise IndexError(f"Index {index} out of bounds for list of size {self.size}")
         return KotList(result)
+
+    def slice_range(self, indices: range) -> 'KotList[T]':
+        """Convenience alias: delegates to slice(indices). Range is an iterable of indices."""
+        return self.slice(indices)
 
     def take(self, n: int) -> 'KotList[T]':
         """Returns a list containing first n elements."""

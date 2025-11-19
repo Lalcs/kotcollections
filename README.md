@@ -202,6 +202,13 @@ Note: Both naming styles (`_null` and `_none`) can be used interchangeably based
 
 For detailed documentation of all available methods, please refer to the [API Reference](docs/API_REFERENCE.md).
 
+## What's New
+
+- BREAKING: KotList.intersect/union/subtract now return KotSet (Kotlin-compatible Set semantics)
+- KotList.slice_range(range) delegates to slice(indices); `slice()` accepts `range` and other iterables of indices
+- Added KotMutableList.remove_if(predicate) and replace_all(operator)
+- Docs updated to reflect Set-returning behavior for intersect/union/subtract and to clarify list vs set alternatives (minus/plus)
+
 ## Performance Considerations
 
 - `KotList` internally uses Python's standard list, so basic operation performance is equivalent to standard lists
