@@ -1038,7 +1038,7 @@ class TestKotListTypeChecking(unittest.TestCase):
         # Try to add a KotList - should raise TypeError
         with self.assertRaises(TypeError) as cm:
             lst._check_type(KotList([4, 5]))
-        self.assertIn("Cannot add KotList to KotList[int]", str(cm.exception))
+        self.assertIn("Cannot add element of type 'KotList' to KotList", str(cm.exception))
     
     def test_flatten_with_non_iterable(self):
         # Test flatten with non-iterable elements (strings are iterable, so use numbers)

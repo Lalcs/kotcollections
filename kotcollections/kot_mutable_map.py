@@ -57,32 +57,49 @@ class KotMutableMap(KotMap[K, V]):
                         for key, value in elements:
                             self._put_with_type_check(key, value)
         
-        # Set a meaningful name for debugging
-        TypedKotMutableMap.__name__ = f"{cls.__name__}[{key_type.__name__}, {value_type.__name__}]"
-        TypedKotMutableMap.__qualname__ = f"{cls.__qualname__}[{key_type.__name__}, {value_type.__name__}]"
+        # Set a meaningful name for debugging (handle cases where __name__ might not exist)
+        key_type_name = getattr(key_type, '__name__', str(key_type))
+        value_type_name = getattr(value_type, '__name__', str(value_type))
+        TypedKotMutableMap.__name__ = f"{cls.__name__}[{key_type_name}, {value_type_name}]"
+        TypedKotMutableMap.__qualname__ = f"{cls.__qualname__}[{key_type_name}, {value_type_name}]"
         
         return TypedKotMutableMap
 
     @classmethod
     def of_type(cls, key_type: Type[K], value_type: Type[V], elements: Optional[Dict[K, V] | List[Tuple[K, V]] | Iterator[Tuple[K, V]]] = None) -> 'KotMutableMap[K, V]':
         """Create a KotMutableMap with specific key and value types.
-        
-        This is useful when you want to create a mutable map with parent types
-        but only have instances of child types.
-        
+
+        This method is particularly useful when you want to create a mutable map with parent types
+        but only have instances of child types. It enables runtime type checking to ensure
+        all keys and values are instances of the specified types or their subclasses.
+
+        Type Checking Behavior:
+            - Accepts exact type matches (Dog value in Animal map)
+            - Accepts subclass instances (Dog value in Animal map)
+            - Rejects parent class instances (Animal value in Dog map)
+            - Rejects unrelated types (Cat value in Dog map)
+
         Args:
-            key_type: The type of keys this map will contain
-            value_type: The type of values this map will contain
-            elements: Optional initial elements
-            
+            key_type: The type of keys this map will contain. All keys
+                     must be instances of this type or its subclasses.
+            value_type: The type of values this map will contain. All values
+                       must be instances of this type or its subclasses.
+            elements: Optional initial elements. Each key-value pair will be type-checked.
+
         Returns:
             A new KotMutableMap instance with the specified types
-            
-        Example:
-            animals_by_name = KotMutableMap.of_type(str, Animal, [("Buddy", Dog("Buddy")), ("Whiskers", Cat("Whiskers"))])
-            # or empty map
-            animals_by_name = KotMutableMap.of_type(str, Animal)
-            animals_by_name.put("Max", Dog("Max"))
+
+        Raises:
+            TypeError: If any key or value is not an instance of its respective type
+
+        Examples:
+            >>> # Create empty typed map
+            >>> animals_by_name = KotMutableMap.of_type(str, Animal)
+
+            >>> # Create with mixed subclass values and modify
+            >>> animals_by_name = KotMutableMap.of_type(str, Animal,
+            ...     [("Buddy", Dog("Buddy"))])
+            >>> animals_by_name.put("Whiskers", Cat("Whiskers"))  # Type-checked at runtime
         """
         # Use __class_getitem__ to create the same dynamic subclass
         typed_class = cls[key_type, value_type]

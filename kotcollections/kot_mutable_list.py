@@ -16,7 +16,7 @@ class KotMutableList(KotList[T]):
     @classmethod
     def __class_getitem__(cls, element_type: Type[T]) -> Type['KotMutableList[T]']:
         """Enable KotMutableList[Type]() syntax for type specification.
-        
+
         Example:
             animals = KotMutableList[Animal]()
             animals.add(Dog("Buddy"))
@@ -35,32 +35,46 @@ class KotMutableList(KotList[T]):
                     for elem in elements:
                         self._check_type(elem)
                         self._elements.append(elem)
-        
-        # Set a meaningful name for debugging
-        TypedKotMutableList.__name__ = f"{cls.__name__}[{element_type.__name__}]"
-        TypedKotMutableList.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
-        
+
+        # Set a meaningful name for debugging (handle cases where __name__ might not exist)
+        type_name = getattr(element_type, '__name__', str(element_type))
+        TypedKotMutableList.__name__ = f"{cls.__name__}[{type_name}]"
+        TypedKotMutableList.__qualname__ = f"{cls.__qualname__}[{type_name}]"
+
         return TypedKotMutableList
 
     @classmethod
     def of_type(cls, element_type: Type[T], elements: Optional[Iterable[T]] = None) -> 'KotMutableList[T]':
         """Create a KotMutableList with a specific element type.
-        
-        This is useful when you want to create a mutable list of a parent type
-        but only have instances of child types.
-        
+
+        This method is particularly useful when you want to create a mutable list of a parent type
+        but only have instances of child types. It enables runtime type checking to ensure
+        all elements are instances of the specified type or its subclasses.
+
+        Type Checking Behavior:
+            - Accepts exact type matches (Dog instance in Dog list)
+            - Accepts subclass instances (Dog instance in Animal list)
+            - Rejects parent class instances (Animal instance in Dog list)
+            - Rejects unrelated types (Cat instance in Dog list)
+
         Args:
-            element_type: The type of elements this list will contain
-            elements: Optional initial elements
-            
+            element_type: The type of elements this list will contain. All elements
+                         must be instances of this type or its subclasses.
+            elements: Optional initial elements. Each element will be type-checked.
+
         Returns:
             A new KotMutableList instance with the specified element type
-            
-        Example:
-            animals = KotMutableList.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
-            # or empty list
-            animals = KotMutableList.of_type(Animal)
-            animals.add(Dog("Max"))
+
+        Raises:
+            TypeError: If any element in `elements` is not an instance of `element_type`
+
+        Examples:
+            >>> # Create empty typed list
+            >>> animals = KotMutableList.of_type(Animal)
+
+            >>> # Create with mixed subclass instances and add more
+            >>> animals = KotMutableList.of_type(Animal, [Dog("Buddy")])
+            >>> animals.add(Cat("Whiskers"))  # Type-checked at runtime
         """
         # Use __class_getitem__ to create the same dynamic subclass
         typed_class = cls[element_type]

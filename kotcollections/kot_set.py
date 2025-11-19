@@ -8,6 +8,8 @@ from collections import defaultdict
 from functools import reduce
 from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List, Type, TYPE_CHECKING, Dict
 
+from kotcollections.type_checker import TypeChecker
+
 if TYPE_CHECKING:
     from kotcollections.kot_list import KotList
     from kotcollections.kot_mutable_list import KotMutableList
@@ -54,7 +56,7 @@ class KotSet(Generic[T]):
     @classmethod
     def __class_getitem__(cls, element_type: Type[T]) -> Type['KotSet[T]']:
         """Enable KotSet[Type]() syntax for type specification.
-        
+
         Example:
             animals = KotSet[Animal]()
             animals.add(Dog("Buddy"))
@@ -83,74 +85,73 @@ class KotSet(Generic[T]):
                     else:  # Iterator
                         for element in elements:
                             self._add_with_type_check(element)
-        
-        # Set a meaningful name for debugging
-        TypedKotSet.__name__ = f"{cls.__name__}[{element_type.__name__}]"
-        TypedKotSet.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
-        
+
+        # Set a meaningful name for debugging (handle cases where __name__ might not exist)
+        type_name = getattr(element_type, '__name__', str(element_type))
+        TypedKotSet.__name__ = f"{cls.__name__}[{type_name}]"
+        TypedKotSet.__qualname__ = f"{cls.__qualname__}[{type_name}]"
+
         return TypedKotSet
 
     @classmethod
     def of_type(cls, element_type: Type[T], elements: Optional[Set[T] | List[T] | Iterator[T]] = None) -> 'KotSet[T]':
         """Create a KotSet with a specific element type.
-        
-        This is useful when you want to create a set of a parent type
-        but only have instances of child types.
-        
+
+        This method is particularly useful when you want to create a set of a parent type
+        but only have instances of child types. It enables runtime type checking to ensure
+        all elements are instances of the specified type or its subclasses.
+
+        Type Checking Behavior:
+            - Accepts exact type matches (Dog instance in Dog set)
+            - Accepts subclass instances (Dog instance in Animal set)
+            - Rejects parent class instances (Animal instance in Dog set)
+            - Rejects unrelated types (Cat instance in Dog set)
+
         Args:
-            element_type: The type of elements this set will contain
-            elements: Optional initial elements
-            
+            element_type: The type of elements this set will contain. All elements
+                         must be instances of this type or its subclasses.
+            elements: Optional initial elements. Each element will be type-checked.
+
         Returns:
             A new KotSet instance with the specified element type
-            
-        Example:
-            animals = KotSet.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
-            # or empty set
-            animals = KotSet.of_type(Animal)
-            animals.add(Dog("Max"))
+
+        Raises:
+            TypeError: If any element in `elements` is not an instance of `element_type`
+
+        Examples:
+            >>> # Create empty typed set
+            >>> animals = KotSet.of_type(Animal)
+
+            >>> # Create with mixed subclass instances
+            >>> animals = KotSet.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
+
+            >>> # Equivalent to __class_getitem__ syntax
+            >>> animals = KotSet[Animal]([Dog("Buddy"), Cat("Whiskers")])
         """
         # Use __class_getitem__ to create the same dynamic subclass
         typed_class = cls[element_type]
         return typed_class(elements)
 
     def _add_with_type_check(self, element: T) -> None:
-        """Add an element with type checking."""
-        # Skip type checking if element_type is a type variable or not a real type
-        if self._element_type is not None and not isinstance(self._element_type, type):
+        """Add an element with type checking.
+
+        This method performs runtime type checking to ensure type safety.
+        It uses the TypeChecker utility for consistent validation across all collections.
+        """
+        # Handle type inference for first element
+        if self._element_type is None and element is not None:
+            self._element_type = TypeChecker.infer_element_type(element, KotSet)
+
+        # Skip type checking if not needed
+        if TypeChecker.should_skip_type_checking(self._element_type):
             self._elements.add(element)
             return
-            
-        if self._element_type is None and element is not None:
-            self._element_type = type(element) if not isinstance(element, KotSet) else KotSet
 
-        if element is not None and self._element_type is not None:
-            if isinstance(element, KotSet) and self._element_type == KotSet:
-                self._elements.add(element)
-            elif not isinstance(element, KotSet):
-                # Check if element is an instance of the expected type
-                if isinstance(element, self._element_type):
-                    self._elements.add(element)
-                # Special handling for __class_getitem__ types (e.g., KotList[Holiday])
-                elif (hasattr(self._element_type, '__base__') and 
-                      hasattr(self._element_type, '__name__') and 
-                      '[' in self._element_type.__name__ and
-                      isinstance(element, self._element_type.__base__)):
-                    # Check if the element has matching element type for KotList/KotSet/KotMap types
-                    if hasattr(element, '_element_type') and hasattr(self._element_type, '__new__'):
-                        # Extract expected element type from the __class_getitem__ type
-                        # This is a more strict check for collection types
-                        self._elements.add(element)
-                    else:
-                        self._elements.add(element)
-                else:
-                    raise TypeError(
-                        f"All elements must be of type {self._element_type.__name__}, got {type(element).__name__}"
-                    )
-            else:
-                self._elements.add(element)
-        elif element is None:
-            self._elements.add(element)
+        # Validate element type (None elements may be allowed)
+        if element is not None:
+            TypeChecker.validate_element(element, self._element_type, "KotSet")
+
+        self._elements.add(element)
 
     # Basic Set operations
 

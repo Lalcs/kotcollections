@@ -64,31 +64,45 @@ class KotMutableSet(KotSet[T]):
                         for element in elements:
                             self._add_with_type_check(element)
         
-        # Set a meaningful name for debugging
-        TypedKotMutableSet.__name__ = f"{cls.__name__}[{element_type.__name__}]"
-        TypedKotMutableSet.__qualname__ = f"{cls.__qualname__}[{element_type.__name__}]"
+        # Set a meaningful name for debugging (handle cases where __name__ might not exist)
+        type_name = getattr(element_type, '__name__', str(element_type))
+        TypedKotMutableSet.__name__ = f"{cls.__name__}[{type_name}]"
+        TypedKotMutableSet.__qualname__ = f"{cls.__qualname__}[{type_name}]"
         
         return TypedKotMutableSet
 
     @classmethod
     def of_type(cls, element_type: Type[T], elements: Optional[Set[T] | List[T] | Iterator[T]] = None) -> 'KotMutableSet[T]':
         """Create a KotMutableSet with a specific element type.
-        
-        This is useful when you want to create a mutable set of a parent type
-        but only have instances of child types.
-        
+
+        This method is particularly useful when you want to create a mutable set of a parent type
+        but only have instances of child types. It enables runtime type checking to ensure
+        all elements are instances of the specified type or its subclasses.
+
+        Type Checking Behavior:
+            - Accepts exact type matches (Dog instance in Dog set)
+            - Accepts subclass instances (Dog instance in Animal set)
+            - Rejects parent class instances (Animal instance in Dog set)
+            - Rejects unrelated types (Cat instance in Dog set)
+
         Args:
-            element_type: The type of elements this set will contain
-            elements: Optional initial elements
-            
+            element_type: The type of elements this set will contain. All elements
+                         must be instances of this type or its subclasses.
+            elements: Optional initial elements. Each element will be type-checked.
+
         Returns:
             A new KotMutableSet instance with the specified element type
-            
-        Example:
-            animals = KotMutableSet.of_type(Animal, [Dog("Buddy"), Cat("Whiskers")])
-            # or empty set
-            animals = KotMutableSet.of_type(Animal)
-            animals.add(Dog("Max"))
+
+        Raises:
+            TypeError: If any element in `elements` is not an instance of `element_type`
+
+        Examples:
+            >>> # Create empty typed set
+            >>> animals = KotMutableSet.of_type(Animal)
+
+            >>> # Create with mixed subclass instances and add more
+            >>> animals = KotMutableSet.of_type(Animal, [Dog("Buddy")])
+            >>> animals.add(Cat("Whiskers"))  # Type-checked at runtime
         """
         # Use __class_getitem__ to create the same dynamic subclass
         typed_class = cls[element_type]
