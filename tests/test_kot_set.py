@@ -1070,7 +1070,7 @@ class TestKotSetInheritanceTypeChecking(unittest.TestCase):
         # Should fail - adding Animal to Dog set
         with self.assertRaises(TypeError) as cm:
             mutable_set.add(self.Animal("Generic"))
-        self.assertIn("All elements must be of type Dog, got Animal", str(cm.exception))
+        self.assertIn("Cannot add element of type 'Animal' to KotSet", str(cm.exception))
     
     def test_different_subclasses_cannot_mix(self):
         """Test that different subclasses cannot be mixed."""
@@ -1081,7 +1081,7 @@ class TestKotSetInheritanceTypeChecking(unittest.TestCase):
         # Should fail - adding Cat to Dog set
         with self.assertRaises(TypeError) as cm:
             mutable_set.add(self.Cat("Whiskers"))
-        self.assertIn("All elements must be of type Dog, got Cat", str(cm.exception))
+        self.assertIn("Cannot add element of type 'Cat' to KotSet", str(cm.exception))
     
     def test_initialization_with_mixed_types(self):
         """Test initialization with mixed parent/subclass types."""
@@ -1094,7 +1094,7 @@ class TestKotSetInheritanceTypeChecking(unittest.TestCase):
         # Should fail when subclass comes first
         with self.assertRaises(TypeError) as cm:
             KotSet([self.Dog("Buddy"), self.Animal("Generic")])
-        self.assertIn("All elements must be of type Dog, got Animal", str(cm.exception))
+        self.assertIn("Cannot add element of type 'Animal' to KotSet", str(cm.exception))
     
     def test_set_operations_with_inheritance(self):
         """Test set operations (union, intersect) with inheritance."""
@@ -1120,7 +1120,7 @@ class TestKotSetInheritanceTypeChecking(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             for elem in cat_set:
                 dog_mutable.add(elem)
-        self.assertIn("All elements must be of type Dog, got Cat", str(cm.exception))
+        self.assertIn("Cannot add element of type 'Cat' to KotSet", str(cm.exception))
     
     def test_none_handling_with_inheritance(self):
         """Test that None values are handled correctly with inheritance."""
