@@ -193,3 +193,4 @@ cython_debug/
 # poetry-dynamic-versioning
 kotlist/_version.py
 
+.temp
