@@ -12,6 +12,13 @@ from .interfaces import (
     IKotMutableMap,
 )
 
+# Extension Interfaces (ABC)
+from .extensions import (
+    IKotIterableExtensions,
+    IKotListExtensions,
+    IKotMapExtensions,
+)
+
 # Implementations
 from .kot_grouping import KotGrouping
 from .kot_list import KotList
@@ -33,6 +40,10 @@ __all__ = [
     'IKotMutableList',
     'IKotMutableSet',
     'IKotMutableMap',
+    # Extension Interfaces
+    'IKotIterableExtensions',
+    'IKotListExtensions',
+    'IKotMapExtensions',
     # Implementations
     'KotList',
     'KotMutableList',

@@ -8,6 +8,7 @@ from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, 
 
 from kotcollections.type_checker import TypeChecker
 from kotcollections.interfaces import IKotList
+from kotcollections.extensions import IKotListExtensions
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 
 
 
-class KotList(IKotList[T]):
+class KotList(IKotList[T], IKotListExtensions[T]):
     def __init__(self, elements: Optional[Iterable[T]] = None):
         self._element_type: Optional[type] = None
         if elements is None:
