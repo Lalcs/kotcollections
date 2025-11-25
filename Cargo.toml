@@ -1,0 +1,15 @@
+[package]
+name = "kotcollections"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vatis <vatis@lalcs.com>"]
+description = "A Python library that fully reproduces Kotlin's Collections interfaces, implemented in Rust"
+license = "MIT"
+repository = "https://github.com/Lalcs/kotcollections"
+
+[lib]
+name = "kotcollections"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["extension-module"] }
