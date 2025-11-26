@@ -2,21 +2,20 @@
 Kotlin-style collection interfaces for Python.
 
 This module defines abstract interfaces that mirror Kotlin's collection hierarchy.
-Interface names use the 'I' prefix to distinguish them from implementation classes.
 
 Immutable (read-only):
-- IKotIterable[T] - Base interface for iteration
-- IKotCollection[T] - Sized, iterable collection with contains
-- IKotList[T] - Ordered collection with index-based access
-- IKotSet[T] - Collection with unique elements
-- IKotMap[K, V] - Key-value pairs
+- KotlinIterable[T] - Base interface for iteration
+- KotlinCollection[T] - Sized, iterable collection with contains
+- KotlinList[T] - Ordered collection with index-based access
+- KotlinSet[T] - Collection with unique elements
+- KotlinMap[K, V] - Key-value pairs
 
 Mutable:
-- IKotMutableIterable[T]
-- IKotMutableCollection[T] - Collection with add/remove operations
-- IKotMutableList[T] - List with mutation operations
-- IKotMutableSet[T] - Set with mutation operations
-- IKotMutableMap[K, V] - Map with mutation operations
+- KotlinMutableIterable[T]
+- KotlinMutableCollection[T] - Collection with add/remove operations
+- KotlinMutableList[T] - List with mutation operations
+- KotlinMutableSet[T] - Set with mutation operations
+- KotlinMutableMap[K, V] - Map with mutation operations
 """
 
 from __future__ import annotations
@@ -39,7 +38,7 @@ V_co = TypeVar('V_co', covariant=True)
 # Immutable (Read-only) Interfaces
 # =============================================================================
 
-class IKotIterable(ABC, Generic[T_co]):
+class KotlinIterable(ABC, Generic[T_co]):
     """Base interface for all iterable collections.
 
     Corresponds to Kotlin's Iterable<T> interface.
@@ -51,7 +50,7 @@ class IKotIterable(ABC, Generic[T_co]):
         ...
 
 
-class IKotCollection(IKotIterable[T_co]):
+class KotlinCollection(KotlinIterable[T_co]):
     """A generic collection of elements with size and contains operations.
 
     Corresponds to Kotlin's Collection<T> interface.
@@ -92,7 +91,7 @@ class IKotCollection(IKotIterable[T_co]):
         return self.contains(item)
 
 
-class IKotList(IKotCollection[T_co]):
+class KotlinList(KotlinCollection[T_co]):
     """An ordered collection with index-based access.
 
     Corresponds to Kotlin's List<T> interface.
@@ -154,7 +153,7 @@ class IKotList(IKotCollection[T_co]):
         ...
 
     @abstractmethod
-    def sub_list(self, from_index: int, to_index: int) -> 'IKotList[T_co]':
+    def sub_list(self, from_index: int, to_index: int) -> 'KotlinList[T_co]':
         """Returns a view of the portion of this list between the specified fromIndex (inclusive) and toIndex (exclusive)."""
         ...
 
@@ -175,7 +174,7 @@ class IKotList(IKotCollection[T_co]):
         return self.get(index)
 
 
-class IKotSet(IKotCollection[T_co]):
+class KotlinSet(KotlinCollection[T_co]):
     """A collection with unique elements.
 
     Corresponds to Kotlin's Set<T> interface.
@@ -185,7 +184,7 @@ class IKotSet(IKotCollection[T_co]):
     pass
 
 
-class IKotMap(ABC, Generic[K_co, V_co]):
+class KotlinMap(ABC, Generic[K_co, V_co]):
     """A collection of key-value pairs.
 
     Corresponds to Kotlin's Map<K, V> interface.
@@ -239,19 +238,19 @@ class IKotMap(ABC, Generic[K_co, V_co]):
 
     @property
     @abstractmethod
-    def keys(self) -> 'IKotSet[K_co]':
+    def keys(self) -> 'KotlinSet[K_co]':
         """Returns a read-only Set of all keys in this map."""
         ...
 
     @property
     @abstractmethod
-    def values(self) -> 'IKotCollection[V_co]':
+    def values(self) -> 'KotlinCollection[V_co]':
         """Returns a read-only Collection of all values in this map."""
         ...
 
     @property
     @abstractmethod
-    def entries(self) -> 'IKotSet[Tuple[K_co, V_co]]':
+    def entries(self) -> 'KotlinSet[Tuple[K_co, V_co]]':
         """Returns a read-only Set of all key/value pairs in this map."""
         ...
 
@@ -277,7 +276,7 @@ class IKotMap(ABC, Generic[K_co, V_co]):
 # Mutable Interfaces
 # =============================================================================
 
-class IKotMutableIterable(IKotIterable[T]):
+class KotlinMutableIterable(KotlinIterable[T]):
     """A mutable iterable that can be modified during iteration.
 
     Corresponds to Kotlin's MutableIterable<T> interface.
@@ -285,7 +284,7 @@ class IKotMutableIterable(IKotIterable[T]):
     pass
 
 
-class IKotMutableCollection(IKotCollection[T], IKotMutableIterable[T]):
+class KotlinMutableCollection(KotlinCollection[T], KotlinMutableIterable[T]):
     """A mutable collection that supports adding and removing elements.
 
     Corresponds to Kotlin's MutableCollection<T> interface.
@@ -343,7 +342,7 @@ class IKotMutableCollection(IKotCollection[T], IKotMutableIterable[T]):
         ...
 
 
-class IKotMutableList(IKotList[T], IKotMutableCollection[T]):
+class KotlinMutableList(KotlinList[T], KotlinMutableCollection[T]):
     """A mutable ordered collection with index-based access and modification.
 
     Corresponds to Kotlin's MutableList<T> interface.
@@ -390,7 +389,7 @@ class IKotMutableList(IKotList[T], IKotMutableCollection[T]):
         self.remove_at(index)
 
 
-class IKotMutableSet(IKotSet[T], IKotMutableCollection[T]):
+class KotlinMutableSet(KotlinSet[T], KotlinMutableCollection[T]):
     """A mutable collection with unique elements that supports adding and removing.
 
     Corresponds to Kotlin's MutableSet<T> interface.
@@ -400,7 +399,7 @@ class IKotMutableSet(IKotSet[T], IKotMutableCollection[T]):
     pass
 
 
-class IKotMutableMap(IKotMap[K, V]):
+class KotlinMutableMap(KotlinMap[K, V]):
     """A mutable collection of key-value pairs that supports adding and removing entries.
 
     Corresponds to Kotlin's MutableMap<K, V> interface.
@@ -443,14 +442,3 @@ class IKotMutableMap(IKotMap[K, V]):
         self.remove(key)
 
 
-# =============================================================================
-# Type aliases for convenience
-# =============================================================================
-
-# These can be used for type hints when you want to accept any implementation
-AnyKotList = IKotList
-AnyKotMutableList = IKotMutableList
-AnyKotSet = IKotSet
-AnyKotMutableSet = IKotMutableSet
-AnyKotMap = IKotMap
-AnyKotMutableMap = IKotMutableMap

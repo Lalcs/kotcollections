@@ -1,22 +1,22 @@
 # Interfaces (ABC)
 from .interfaces import (
-    IKotIterable,
-    IKotCollection,
-    IKotList,
-    IKotSet,
-    IKotMap,
-    IKotMutableIterable,
-    IKotMutableCollection,
-    IKotMutableList,
-    IKotMutableSet,
-    IKotMutableMap,
+    KotlinIterable,
+    KotlinCollection,
+    KotlinList,
+    KotlinSet,
+    KotlinMap,
+    KotlinMutableIterable,
+    KotlinMutableCollection,
+    KotlinMutableList,
+    KotlinMutableSet,
+    KotlinMutableMap,
 )
 
 # Extension Interfaces (ABC)
 from .extensions import (
-    IKotIterableExtensions,
-    IKotListExtensions,
-    IKotMapExtensions,
+    KotlinIterableExtensions,
+    KotlinListExtensions,
+    KotlinMapExtensions,
 )
 
 # Implementations
@@ -30,20 +30,20 @@ from .kot_set import KotSet
 
 __all__ = [
     # Interfaces
-    'IKotIterable',
-    'IKotCollection',
-    'IKotList',
-    'IKotSet',
-    'IKotMap',
-    'IKotMutableIterable',
-    'IKotMutableCollection',
-    'IKotMutableList',
-    'IKotMutableSet',
-    'IKotMutableMap',
+    'KotlinIterable',
+    'KotlinCollection',
+    'KotlinList',
+    'KotlinSet',
+    'KotlinMap',
+    'KotlinMutableIterable',
+    'KotlinMutableCollection',
+    'KotlinMutableList',
+    'KotlinMutableSet',
+    'KotlinMutableMap',
     # Extension Interfaces
-    'IKotIterableExtensions',
-    'IKotListExtensions',
-    'IKotMapExtensions',
+    'KotlinIterableExtensions',
+    'KotlinListExtensions',
+    'KotlinMapExtensions',
     # Implementations
     'KotList',
     'KotMutableList',

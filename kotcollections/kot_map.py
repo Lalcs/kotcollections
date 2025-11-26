@@ -7,8 +7,8 @@ from __future__ import annotations
 from typing import TypeVar, Generic, Callable, Optional, Dict, Iterator, Any, Tuple, List, Set, Type, TYPE_CHECKING
 
 from kotcollections.type_checker import TypeChecker
-from kotcollections.interfaces import IKotMap
-from kotcollections.extensions import IKotMapExtensions
+from kotcollections.interfaces import KotlinMap
+from kotcollections.extensions import KotlinMapExtensions
 
 if TYPE_CHECKING:
     from kotcollections import KotMutableMap, KotList, KotSet
@@ -19,7 +19,7 @@ R = TypeVar('R')
 
 
 
-class KotMap(IKotMap[K, V], IKotMapExtensions[K, V]):
+class KotMap(KotlinMap[K, V], KotlinMapExtensions[K, V]):
     """A Python implementation of Kotlin's Map interface.
     
     This class provides all methods from Kotlin's Map interface with snake_case naming,

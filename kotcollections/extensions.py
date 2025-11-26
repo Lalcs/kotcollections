@@ -6,9 +6,9 @@ In Kotlin, these are defined as extension functions on Iterable, Collection, Lis
 In Python, we implement them as mixin interfaces.
 
 Extension interfaces:
-- IKotIterableExtensions[T] - filter, map, fold, reduce, etc.
-- IKotListExtensions[T] - List-specific extensions (sorted, binary_search, etc.)
-- IKotMapExtensions[K, V] - Map-specific extensions
+- KotlinIterableExtensions[T] - filter, map, fold, reduce, etc.
+- KotlinListExtensions[T] - List-specific extensions (sorted, binary_search, etc.)
+- KotlinMapExtensions[K, V] - Map-specific extensions
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ V = TypeVar('V')
 # Iterable Extensions
 # =============================================================================
 
-class IKotIterableExtensions(ABC, Generic[T_co]):
+class KotlinIterableExtensions(ABC, Generic[T_co]):
     """Extension functions for Iterable collections.
 
     Corresponds to Kotlin's extension functions on Iterable<T>.
@@ -214,7 +214,7 @@ class IKotIterableExtensions(ABC, Generic[T_co]):
         ...
 
     @abstractmethod
-    def on_each(self, action: Callable[[T_co], None]) -> 'IKotIterableExtensions[T_co]':
+    def on_each(self, action: Callable[[T_co], None]) -> 'KotlinIterableExtensions[T_co]':
         """Performs the given action on each element and returns the collection itself."""
         ...
 
@@ -264,7 +264,7 @@ class IKotIterableExtensions(ABC, Generic[T_co]):
 # List Extensions
 # =============================================================================
 
-class IKotListExtensions(IKotIterableExtensions[T_co]):
+class KotlinListExtensions(KotlinIterableExtensions[T_co]):
     """Extension functions specific to List collections.
 
     Corresponds to Kotlin's extension functions on List<T>.
@@ -406,7 +406,7 @@ class IKotListExtensions(IKotIterableExtensions[T_co]):
 # Map Extensions
 # =============================================================================
 
-class IKotMapExtensions(ABC, Generic[K, V]):
+class KotlinMapExtensions(ABC, Generic[K, V]):
     """Extension functions specific to Map collections.
 
     Corresponds to Kotlin's extension functions on Map<K, V>.
@@ -484,7 +484,7 @@ class IKotMapExtensions(ABC, Generic[K, V]):
         ...
 
     @abstractmethod
-    def on_each(self, action: Callable[[K, V], None]) -> 'IKotMapExtensions[K, V]':
+    def on_each(self, action: Callable[[K, V], None]) -> 'KotlinMapExtensions[K, V]':
         """Performs the given action on each entry and returns the map itself."""
         ...
 

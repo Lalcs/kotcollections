@@ -5,16 +5,16 @@ Tests for Kotlin-style collection interfaces.
 import unittest
 from kotcollections import (
     # Interfaces
-    IKotIterable,
-    IKotCollection,
-    IKotList,
-    IKotSet,
-    IKotMap,
-    IKotMutableIterable,
-    IKotMutableCollection,
-    IKotMutableList,
-    IKotMutableSet,
-    IKotMutableMap,
+    KotlinIterable,
+    KotlinCollection,
+    KotlinList,
+    KotlinSet,
+    KotlinMap,
+    KotlinMutableIterable,
+    KotlinMutableCollection,
+    KotlinMutableList,
+    KotlinMutableSet,
+    KotlinMutableMap,
     # Implementations
     KotList,
     KotMutableList,
@@ -30,53 +30,53 @@ class TestInterfaceInstanceCheck(unittest.TestCase):
 
     def test_kot_list_implements_ikot_list(self):
         lst = KotList([1, 2, 3])
-        self.assertIsInstance(lst, IKotList)
-        self.assertIsInstance(lst, IKotCollection)
-        self.assertIsInstance(lst, IKotIterable)
+        self.assertIsInstance(lst, KotlinList)
+        self.assertIsInstance(lst, KotlinCollection)
+        self.assertIsInstance(lst, KotlinIterable)
 
     def test_kot_mutable_list_implements_ikot_mutable_list(self):
         lst = KotMutableList([1, 2, 3])
-        self.assertIsInstance(lst, IKotMutableList)
-        self.assertIsInstance(lst, IKotMutableCollection)
-        self.assertIsInstance(lst, IKotMutableIterable)
+        self.assertIsInstance(lst, KotlinMutableList)
+        self.assertIsInstance(lst, KotlinMutableCollection)
+        self.assertIsInstance(lst, KotlinMutableIterable)
         # Should also implement read-only interfaces
-        self.assertIsInstance(lst, IKotList)
-        self.assertIsInstance(lst, IKotCollection)
-        self.assertIsInstance(lst, IKotIterable)
+        self.assertIsInstance(lst, KotlinList)
+        self.assertIsInstance(lst, KotlinCollection)
+        self.assertIsInstance(lst, KotlinIterable)
 
     def test_kot_set_implements_ikot_set(self):
         s = KotSet([1, 2, 3])
-        self.assertIsInstance(s, IKotSet)
-        self.assertIsInstance(s, IKotCollection)
-        self.assertIsInstance(s, IKotIterable)
+        self.assertIsInstance(s, KotlinSet)
+        self.assertIsInstance(s, KotlinCollection)
+        self.assertIsInstance(s, KotlinIterable)
 
     def test_kot_mutable_set_implements_ikot_mutable_set(self):
         s = KotMutableSet([1, 2, 3])
-        self.assertIsInstance(s, IKotMutableSet)
-        self.assertIsInstance(s, IKotMutableCollection)
-        self.assertIsInstance(s, IKotMutableIterable)
+        self.assertIsInstance(s, KotlinMutableSet)
+        self.assertIsInstance(s, KotlinMutableCollection)
+        self.assertIsInstance(s, KotlinMutableIterable)
         # Should also implement read-only interfaces
-        self.assertIsInstance(s, IKotSet)
-        self.assertIsInstance(s, IKotCollection)
-        self.assertIsInstance(s, IKotIterable)
+        self.assertIsInstance(s, KotlinSet)
+        self.assertIsInstance(s, KotlinCollection)
+        self.assertIsInstance(s, KotlinIterable)
 
     def test_kot_map_implements_ikot_map(self):
         m = KotMap({"a": 1, "b": 2})
-        self.assertIsInstance(m, IKotMap)
+        self.assertIsInstance(m, KotlinMap)
 
     def test_kot_mutable_map_implements_ikot_mutable_map(self):
         m = KotMutableMap({"a": 1, "b": 2})
-        self.assertIsInstance(m, IKotMutableMap)
+        self.assertIsInstance(m, KotlinMutableMap)
         # Should also implement read-only interface
-        self.assertIsInstance(m, IKotMap)
+        self.assertIsInstance(m, KotlinMap)
 
 
 class TestInterfacePolymorphism(unittest.TestCase):
     """Test that interfaces can be used polymorphically."""
 
     def test_accept_any_list(self):
-        """Function accepting IKotList should work with both KotList and KotMutableList."""
-        def sum_elements(lst: IKotList[int]) -> int:
+        """Function accepting KotlinList should work with both KotList and KotMutableList."""
+        def sum_elements(lst: KotlinList[int]) -> int:
             return lst.fold(0, lambda acc, x: acc + x)
 
         immutable = KotList([1, 2, 3])
@@ -86,8 +86,8 @@ class TestInterfacePolymorphism(unittest.TestCase):
         self.assertEqual(sum_elements(mutable), 6)
 
     def test_accept_any_set(self):
-        """Function accepting IKotSet should work with both KotSet and KotMutableSet."""
-        def count_elements(s: IKotSet[int]) -> int:
+        """Function accepting KotlinSet should work with both KotSet and KotMutableSet."""
+        def count_elements(s: KotlinSet[int]) -> int:
             return s.size
 
         immutable = KotSet([1, 2, 3])
@@ -97,8 +97,8 @@ class TestInterfacePolymorphism(unittest.TestCase):
         self.assertEqual(count_elements(mutable), 3)
 
     def test_accept_any_map(self):
-        """Function accepting IKotMap should work with both KotMap and KotMutableMap."""
-        def get_keys_count(m: IKotMap[str, int]) -> int:
+        """Function accepting KotlinMap should work with both KotMap and KotMutableMap."""
+        def get_keys_count(m: KotlinMap[str, int]) -> int:
             return m.keys.size
 
         immutable = KotMap({"a": 1, "b": 2})
@@ -108,8 +108,8 @@ class TestInterfacePolymorphism(unittest.TestCase):
         self.assertEqual(get_keys_count(mutable), 2)
 
     def test_accept_any_collection(self):
-        """Function accepting IKotCollection should work with KotList and KotSet."""
-        def contains_value(col: IKotCollection[int], value: int) -> bool:
+        """Function accepting KotlinCollection should work with KotList and KotSet."""
+        def contains_value(col: KotlinCollection[int], value: int) -> bool:
             return col.contains(value)
 
         lst = KotList([1, 2, 3])
@@ -121,8 +121,8 @@ class TestInterfacePolymorphism(unittest.TestCase):
         self.assertFalse(contains_value(s, 5))
 
     def test_accept_any_iterable(self):
-        """Function accepting IKotIterable should work with all collection types."""
-        def to_list_manual(iterable: IKotIterable[int]) -> list:
+        """Function accepting KotlinIterable should work with all collection types."""
+        def to_list_manual(iterable: KotlinIterable[int]) -> list:
             return list(iterable)
 
         lst = KotList([1, 2, 3])
@@ -142,50 +142,50 @@ class TestInterfaceHierarchy(unittest.TestCase):
         """KotMutableList should be in the correct hierarchy."""
         lst = KotMutableList()
         # Check full hierarchy
-        self.assertIsInstance(lst, IKotMutableList)
-        self.assertIsInstance(lst, IKotList)
-        self.assertIsInstance(lst, IKotMutableCollection)
-        self.assertIsInstance(lst, IKotCollection)
-        self.assertIsInstance(lst, IKotMutableIterable)
-        self.assertIsInstance(lst, IKotIterable)
+        self.assertIsInstance(lst, KotlinMutableList)
+        self.assertIsInstance(lst, KotlinList)
+        self.assertIsInstance(lst, KotlinMutableCollection)
+        self.assertIsInstance(lst, KotlinCollection)
+        self.assertIsInstance(lst, KotlinMutableIterable)
+        self.assertIsInstance(lst, KotlinIterable)
 
     def test_mutable_set_hierarchy(self):
         """KotMutableSet should be in the correct hierarchy."""
         s = KotMutableSet()
         # Check full hierarchy
-        self.assertIsInstance(s, IKotMutableSet)
-        self.assertIsInstance(s, IKotSet)
-        self.assertIsInstance(s, IKotMutableCollection)
-        self.assertIsInstance(s, IKotCollection)
-        self.assertIsInstance(s, IKotMutableIterable)
-        self.assertIsInstance(s, IKotIterable)
+        self.assertIsInstance(s, KotlinMutableSet)
+        self.assertIsInstance(s, KotlinSet)
+        self.assertIsInstance(s, KotlinMutableCollection)
+        self.assertIsInstance(s, KotlinCollection)
+        self.assertIsInstance(s, KotlinMutableIterable)
+        self.assertIsInstance(s, KotlinIterable)
 
     def test_mutable_map_hierarchy(self):
         """KotMutableMap should be in the correct hierarchy."""
         m = KotMutableMap()
         # Check full hierarchy
-        self.assertIsInstance(m, IKotMutableMap)
-        self.assertIsInstance(m, IKotMap)
+        self.assertIsInstance(m, KotlinMutableMap)
+        self.assertIsInstance(m, KotlinMap)
 
 
 class TestInterfaceAbstractMethods(unittest.TestCase):
     """Test that interface abstract methods are properly implemented."""
 
     def test_list_required_methods(self):
-        """KotList should implement all required IKotList methods."""
+        """KotList should implement all required KotlinList methods."""
         lst = KotList([1, 2, 3])
 
-        # IKotIterable
+        # KotlinIterable
         self.assertTrue(hasattr(lst, '__iter__'))
 
-        # IKotCollection
+        # KotlinCollection
         self.assertEqual(lst.size, 3)
         self.assertFalse(lst.is_empty())
         self.assertTrue(lst.is_not_empty())
         self.assertTrue(lst.contains(2))
         self.assertTrue(lst.contains_all([1, 2]))
 
-        # IKotList
+        # KotlinList
         self.assertEqual(lst.get(0), 1)
         self.assertIsNone(lst.get_or_null(10))
         self.assertIsNone(lst.get_or_none(10))
@@ -201,10 +201,10 @@ class TestInterfaceAbstractMethods(unittest.TestCase):
         self.assertEqual(lst.last_index, 2)
 
     def test_mutable_list_required_methods(self):
-        """KotMutableList should implement all required IKotMutableList methods."""
+        """KotMutableList should implement all required KotlinMutableList methods."""
         lst = KotMutableList([1, 2, 3])
 
-        # IKotMutableCollection
+        # KotlinMutableCollection
         self.assertTrue(lst.add(4))
         self.assertEqual(lst.size, 4)
         self.assertTrue(lst.add_all([5, 6]))
@@ -217,7 +217,7 @@ class TestInterfaceAbstractMethods(unittest.TestCase):
 
         lst = KotMutableList([1, 2, 3])
 
-        # IKotMutableList
+        # KotlinMutableList
         lst.add_at(0, 0)
         self.assertEqual(lst.get(0), 0)
         self.assertTrue(lst.add_all_at(2, [10, 11]))
@@ -228,10 +228,10 @@ class TestInterfaceAbstractMethods(unittest.TestCase):
         self.assertEqual(removed, 100)
 
     def test_map_required_methods(self):
-        """KotMap should implement all required IKotMap methods."""
+        """KotMap should implement all required KotlinMap methods."""
         m = KotMap({"a": 1, "b": 2})
 
-        # IKotMap
+        # KotlinMap
         self.assertEqual(m.size, 2)
         self.assertFalse(m.is_empty())
         self.assertTrue(m.is_not_empty())
@@ -246,10 +246,10 @@ class TestInterfaceAbstractMethods(unittest.TestCase):
         self.assertEqual(m.entries.size, 2)
 
     def test_mutable_map_required_methods(self):
-        """KotMutableMap should implement all required IKotMutableMap methods."""
+        """KotMutableMap should implement all required KotlinMutableMap methods."""
         m = KotMutableMap({"a": 1})
 
-        # IKotMutableMap
+        # KotlinMutableMap
         old = m.put("b", 2)
         self.assertIsNone(old)
         self.assertEqual(m.get("b"), 2)

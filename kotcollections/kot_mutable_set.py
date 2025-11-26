@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TypeVar, Set, List, Iterator, Optional, Callable, Type, TYPE_CHECKING, Dict, Tuple
 
 from kotcollections.kot_set import KotSet
-from kotcollections.interfaces import IKotMutableSet
+from kotcollections.interfaces import KotlinMutableSet
 
 if TYPE_CHECKING:
     from kotcollections.kot_list import KotList
@@ -17,7 +17,7 @@ T = TypeVar('T')
 
 
 
-class KotMutableSet(KotSet[T], IKotMutableSet[T]):
+class KotMutableSet(KotSet[T], KotlinMutableSet[T]):
     """A Python implementation of Kotlin's MutableSet interface.
     
     This class extends KotSet with mutation methods, providing full
