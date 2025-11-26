@@ -501,3 +501,222 @@ class KotlinMapExtensions(ABC, Generic[K, V]):
     def minus(self, key: Union[K, Iterable[K]]) -> 'KotMap[K, V]':
         """Returns a map containing all entries except those with the given keys."""
         ...
+
+
+# =============================================================================
+# Pythonic Alias Mixin Interfaces
+# =============================================================================
+
+class PythonicIterableExtensionAliases(ABC, Generic[T_co]):
+    """Pythonic aliases for KotlinIterableExtensions methods.
+
+    This mixin provides Python-style method names using 'None' instead of 'null'.
+    """
+
+    @abstractmethod
+    def filter_not_none(self) -> 'KotList[T_co]':
+        """Alias for filter_not_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def map_not_none(self, transform: Callable[[T_co], Optional[R]]) -> 'KotList[R]':
+        """Alias for map_not_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def max_or_none(self) -> Optional[T_co]:
+        """Alias for max_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def min_or_none(self) -> Optional[T_co]:
+        """Alias for min_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def max_by_or_none(self, selector: Callable[[T_co], Any]) -> Optional[T_co]:
+        """Alias for max_by_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def min_by_or_none(self, selector: Callable[[T_co], Any]) -> Optional[T_co]:
+        """Alias for min_by_or_null() - more Pythonic naming."""
+        ...
+
+
+class PythonicListExtensionAliases(PythonicIterableExtensionAliases[T_co]):
+    """Pythonic aliases for KotlinListExtensions methods.
+
+    This mixin provides Python-style method names using 'None' instead of 'null'.
+    """
+
+    @abstractmethod
+    def element_at_or_none(self, index: int) -> Optional[T_co]:
+        """Alias for element_at_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def first_or_none_predicate(self, predicate: Callable[[T_co], bool]) -> Optional[T_co]:
+        """Alias for first_or_null_predicate() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def last_or_none_predicate(self, predicate: Callable[[T_co], bool]) -> Optional[T_co]:
+        """Alias for last_or_null_predicate() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def single_or_none(self) -> Optional[T_co]:
+        """Alias for single_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def single_or_none_predicate(self, predicate: Callable[[T_co], bool]) -> Optional[T_co]:
+        """Alias for single_or_null_predicate() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def random_or_none(self) -> Optional[T_co]:
+        """Alias for random_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def reduce_or_none(self, operation: Callable[[T_co, T_co], T_co]) -> Optional[T_co]:
+        """Alias for reduce_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def reduce_indexed_or_none(self, operation: Callable[[int, T_co, T_co], T_co]) -> Optional[T_co]:
+        """Alias for reduce_indexed_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def reduce_right_or_none(self, operation: Callable[[T_co, T_co], T_co]) -> Optional[T_co]:
+        """Alias for reduce_right_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def reduce_right_indexed_or_none(self, operation: Callable[[int, T_co, T_co], T_co]) -> Optional[T_co]:
+        """Alias for reduce_right_indexed_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def map_indexed_not_none(self, transform: Callable[[int, T_co], Optional[R]]) -> 'KotList[R]':
+        """Alias for map_indexed_not_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def max_of_or_none(self, selector: Callable[[T_co], R]) -> Optional[R]:
+        """Alias for max_of_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def min_of_or_none(self, selector: Callable[[T_co], R]) -> Optional[R]:
+        """Alias for min_of_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def max_of_with_or_none(self, comparator: Callable[[R, R], int], selector: Callable[[T_co], R]) -> Optional[R]:
+        """Alias for max_of_with_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def min_of_with_or_none(self, comparator: Callable[[R, R], int], selector: Callable[[T_co], R]) -> Optional[R]:
+        """Alias for min_of_with_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def first_not_none_of(self, transform: Callable[[T_co], Optional[R]]) -> R:
+        """Alias for first_not_null_of() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def first_not_none_of_or_none(self, transform: Callable[[T_co], Optional[R]]) -> Optional[R]:
+        """Alias for first_not_null_of_or_null() - more Pythonic naming."""
+        ...
+
+
+class PythonicMutableListAliases(ABC, Generic[T_co]):
+    """Pythonic aliases for KotlinMutableList methods.
+
+    This mixin provides Python-style method names using 'None' instead of 'null'.
+    """
+
+    @abstractmethod
+    def remove_first_or_none(self) -> Optional[T_co]:
+        """Alias for remove_first_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def remove_last_or_none(self) -> Optional[T_co]:
+        """Alias for remove_last_or_null() - more Pythonic naming."""
+        ...
+
+
+class PythonicMapExtensionAliases(ABC, Generic[K, V]):
+    """Pythonic aliases for KotlinMapExtensions methods.
+
+    This mixin provides Python-style method names using 'None' instead of 'null'.
+    """
+
+    @abstractmethod
+    def get_or_none(self, key: K) -> Optional[V]:
+        """Alias for get_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def filter_not_none(self) -> 'KotMap[K, V]':
+        """Alias for filter_not_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def map_not_none(self, transform: Callable[[K, V], Optional[R]]) -> 'KotList[R]':
+        """Alias for map_not_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def max_by_or_none(self, selector: Callable[[K, V], Any]) -> Optional[Tuple[K, V]]:
+        """Alias for max_by_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def min_by_or_none(self, selector: Callable[[K, V], Any]) -> Optional[Tuple[K, V]]:
+        """Alias for min_by_or_null() - more Pythonic naming."""
+        ...
+
+
+class PythonicSetAliases(ABC, Generic[T_co]):
+    """Pythonic aliases for KotSet methods.
+
+    This mixin provides Python-style method names using 'None' instead of 'null'.
+    """
+
+    @abstractmethod
+    def first_or_none(self) -> Optional[T_co]:
+        """Alias for first_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def first_or_none_predicate(self, predicate: Callable[[T_co], bool]) -> Optional[T_co]:
+        """Alias for first_or_null_predicate() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def last_or_none(self) -> Optional[T_co]:
+        """Alias for last_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def single_or_none(self) -> Optional[T_co]:
+        """Alias for single_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def single_or_none_predicate(self, predicate: Callable[[T_co], bool]) -> Optional[T_co]:
+        """Alias for single_or_null_predicate() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def reduce_or_none(self, operation: Callable[[T_co, T_co], T_co]) -> Optional[T_co]:
+        """Alias for reduce_or_null() - more Pythonic naming."""
+        ...

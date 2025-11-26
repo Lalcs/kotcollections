@@ -107,10 +107,6 @@ class KotlinList(KotlinCollection[T_co]):
         """Returns the element at the specified index, or null if the index is out of bounds."""
         ...
 
-    @abstractmethod
-    def get_or_none(self, index: int) -> Optional[T_co]:
-        """Alias for get_or_null() - more Pythonic naming."""
-        ...
 
     @abstractmethod
     def index_of(self, element: Any) -> int:
@@ -132,10 +128,6 @@ class KotlinList(KotlinCollection[T_co]):
         """Returns the first element, or null if the collection is empty."""
         ...
 
-    @abstractmethod
-    def first_or_none(self) -> Optional[T_co]:
-        """Alias for first_or_null() - more Pythonic naming."""
-        ...
 
     @abstractmethod
     def last(self) -> T_co:
@@ -147,10 +139,6 @@ class KotlinList(KotlinCollection[T_co]):
         """Returns the last element, or null if the collection is empty."""
         ...
 
-    @abstractmethod
-    def last_or_none(self) -> Optional[T_co]:
-        """Alias for last_or_null() - more Pythonic naming."""
-        ...
 
     @abstractmethod
     def sub_list(self, from_index: int, to_index: int) -> 'KotlinList[T_co]':
@@ -440,5 +428,32 @@ class KotlinMutableMap(KotlinMap[K, V]):
     def __delitem__(self, key: K) -> None:
         """Delete entry by key using del operator."""
         self.remove(key)
+
+
+# =============================================================================
+# Pythonic Alias Mixin Interfaces
+# =============================================================================
+
+class PythonicListAliases(ABC, Generic[T_co]):
+    """Pythonic aliases for KotlinList methods (_or_null → _or_none).
+
+    This mixin provides Python-style method names using 'None' instead of 'null'.
+    Implementations should delegate to the corresponding _or_null methods.
+    """
+
+    @abstractmethod
+    def get_or_none(self, index: int) -> Optional[T_co]:
+        """Alias for get_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def first_or_none(self) -> Optional[T_co]:
+        """Alias for first_or_null() - more Pythonic naming."""
+        ...
+
+    @abstractmethod
+    def last_or_none(self) -> Optional[T_co]:
+        """Alias for last_or_null() - more Pythonic naming."""
+        ...
 
 

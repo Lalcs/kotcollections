@@ -10,7 +10,7 @@ from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tup
 
 from kotcollections.type_checker import TypeChecker
 from kotcollections.interfaces import KotlinSet
-from kotcollections.extensions import KotlinIterableExtensions
+from kotcollections.extensions import KotlinIterableExtensions, PythonicSetAliases
 
 if TYPE_CHECKING:
     from kotcollections.kot_list import KotList
@@ -23,7 +23,7 @@ R = TypeVar('R')
 
 
 
-class KotSet(KotlinSet[T], KotlinIterableExtensions[T]):
+class KotSet(KotlinSet[T], KotlinIterableExtensions[T], PythonicSetAliases[T]):
     """A Python implementation of Kotlin's Set interface.
     
     This class provides all methods from Kotlin's Set interface with snake_case naming,
