@@ -7,13 +7,14 @@ from __future__ import annotations
 from typing import TypeVar, Dict, List, Iterator, Optional, Callable, Tuple, Type
 
 from kotcollections.kot_map import KotMap
+from kotcollections.interfaces import KotlinMutableMap
 
 K = TypeVar('K')
 V = TypeVar('V')
 
 
 
-class KotMutableMap(KotMap[K, V]):
+class KotMutableMap(KotMap[K, V], KotlinMutableMap[K, V]):
     """A Python implementation of Kotlin's MutableMap interface.
     
     This class extends KotMap with mutation methods, providing full

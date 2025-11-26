@@ -7,6 +7,8 @@ from functools import reduce, cmp_to_key
 from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Iterator, Any, Dict, Union, TYPE_CHECKING, Set, Type
 
 from kotcollections.type_checker import TypeChecker
+from kotcollections.interfaces import KotlinList, PythonicListAliases
+from kotcollections.extensions import KotlinListExtensions, PythonicListExtensionAliases
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -21,7 +23,7 @@ if TYPE_CHECKING:
 
 
 
-class KotList(Generic[T]):
+class KotList(KotlinList[T], KotlinListExtensions[T], PythonicListAliases[T], PythonicListExtensionAliases[T]):
     def __init__(self, elements: Optional[Iterable[T]] = None):
         self._element_type: Optional[type] = None
         if elements is None:
