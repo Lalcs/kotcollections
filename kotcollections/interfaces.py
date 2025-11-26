@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import (
-    TypeVar, Generic, Callable, Optional, Iterator, Tuple, Any, Iterable, List, Set, Dict
+    TypeVar, Generic, Callable, Optional, Iterator, Tuple, Any, Iterable, List, Set, Dict, Type
 )
 
 T = TypeVar('T')
@@ -32,6 +32,53 @@ K = TypeVar('K')
 V = TypeVar('V')
 K_co = TypeVar('K_co', covariant=True)
 V_co = TypeVar('V_co', covariant=True)
+
+
+# =============================================================================
+# Factory Mixin Interfaces
+# =============================================================================
+
+class KotlinCollectionFactory(ABC, Generic[T_co]):
+    """Factory method mixin for creating typed collections.
+
+    Provides the of_type() class method for creating collections with explicit type checking.
+    """
+
+    @classmethod
+    @abstractmethod
+    def of_type(cls, element_type: Type[T_co], elements: Optional[Iterable[T_co]] = None) -> 'KotlinCollectionFactory[T_co]':
+        """Create a collection with a specific element type.
+
+        Args:
+            element_type: The type of elements this collection will contain.
+            elements: Optional initial elements.
+
+        Returns:
+            A new collection instance with the specified element type.
+        """
+        ...
+
+
+class KotlinMapFactory(ABC, Generic[K_co, V_co]):
+    """Factory method mixin for creating typed maps.
+
+    Provides the of_type() class method for creating maps with explicit type checking.
+    """
+
+    @classmethod
+    @abstractmethod
+    def of_type(cls, key_type: Type[K_co], value_type: Type[V_co], elements: Optional[Dict[K_co, V_co]] = None) -> 'KotlinMapFactory[K_co, V_co]':
+        """Create a map with specific key and value types.
+
+        Args:
+            key_type: The type of keys this map will contain.
+            value_type: The type of values this map will contain.
+            elements: Optional initial elements.
+
+        Returns:
+            A new map instance with the specified key and value types.
+        """
+        ...
 
 
 # =============================================================================
@@ -167,9 +214,36 @@ class KotlinSet(KotlinCollection[T_co]):
 
     Corresponds to Kotlin's Set<T> interface.
     """
-    # KotSet inherits all methods from KotCollection
-    # No additional abstract methods are required
-    pass
+
+    @abstractmethod
+    def first(self) -> T_co:
+        """Returns the first element."""
+        ...
+
+    @abstractmethod
+    def first_or_null(self) -> Optional[T_co]:
+        """Returns the first element, or null if the set is empty."""
+        ...
+
+    @abstractmethod
+    def last(self) -> T_co:
+        """Returns the last element."""
+        ...
+
+    @abstractmethod
+    def last_or_null(self) -> Optional[T_co]:
+        """Returns the last element, or null if the set is empty."""
+        ...
+
+    @abstractmethod
+    def single(self) -> T_co:
+        """Returns the single element, or throws if the set is empty or has more than one element."""
+        ...
+
+    @abstractmethod
+    def single_or_null(self) -> Optional[T_co]:
+        """Returns the single element, or null if the set is empty or has more than one element."""
+        ...
 
 
 class KotlinMap(ABC, Generic[K_co, V_co]):
@@ -368,6 +442,88 @@ class KotlinMutableList(KotlinList[T], KotlinMutableCollection[T]):
         """
         ...
 
+    @abstractmethod
+    def remove_first(self) -> T:
+        """Removes the first element from this list and returns it.
+
+        Raises:
+            NoSuchElementException: if the list is empty.
+        """
+        ...
+
+    @abstractmethod
+    def remove_first_or_null(self) -> Optional[T]:
+        """Removes the first element from this list and returns it, or returns null if the list is empty."""
+        ...
+
+    @abstractmethod
+    def remove_last(self) -> T:
+        """Removes the last element from this list and returns it.
+
+        Raises:
+            NoSuchElementException: if the list is empty.
+        """
+        ...
+
+    @abstractmethod
+    def remove_last_or_null(self) -> Optional[T]:
+        """Removes the last element from this list and returns it, or returns null if the list is empty."""
+        ...
+
+    @abstractmethod
+    def remove_if(self, predicate: Callable[[T], bool]) -> bool:
+        """Removes all elements from this list that match the given predicate.
+
+        Returns:
+            true if any elements were removed.
+        """
+        ...
+
+    @abstractmethod
+    def replace_all(self, operator: Callable[[T], T]) -> None:
+        """Replaces each element of this list with the result of applying the operator to that element."""
+        ...
+
+    @abstractmethod
+    def reverse(self) -> None:
+        """Reverses the elements in this list in place."""
+        ...
+
+    @abstractmethod
+    def shuffle(self) -> None:
+        """Randomly shuffles elements in this list in place."""
+        ...
+
+    @abstractmethod
+    def sort(self) -> None:
+        """Sorts elements in this list in place according to their natural sort order."""
+        ...
+
+    @abstractmethod
+    def sort_by(self, selector: Callable[[T], Any]) -> None:
+        """Sorts elements in this list in place according to the value returned by the selector function."""
+        ...
+
+    @abstractmethod
+    def sort_by_descending(self, selector: Callable[[T], Any]) -> None:
+        """Sorts elements in this list in place in descending order according to the value returned by the selector."""
+        ...
+
+    @abstractmethod
+    def sort_descending(self) -> None:
+        """Sorts elements in this list in place in descending order according to their natural sort order."""
+        ...
+
+    @abstractmethod
+    def sort_with(self, comparator: Callable[[T, T], int]) -> None:
+        """Sorts elements in this list in place according to the order specified by the comparator."""
+        ...
+
+    @abstractmethod
+    def fill(self, value: T) -> None:
+        """Fills this list with the provided value."""
+        ...
+
     def __setitem__(self, index: int, value: T) -> None:
         """Set element by index using [] operator."""
         self.set(index, value)
@@ -382,9 +538,39 @@ class KotlinMutableSet(KotlinSet[T], KotlinMutableCollection[T]):
 
     Corresponds to Kotlin's MutableSet<T> interface.
     """
-    # KotMutableSet inherits all methods from KotMutableCollection and KotSet
-    # No additional abstract methods are required
-    pass
+
+    @abstractmethod
+    def remove_if(self, predicate: Callable[[T], bool]) -> bool:
+        """Removes all elements from this set that match the given predicate.
+
+        Returns:
+            true if any elements were removed.
+        """
+        ...
+
+    @abstractmethod
+    def retain_if(self, predicate: Callable[[T], bool]) -> bool:
+        """Retains only the elements in this set that match the given predicate.
+
+        Returns:
+            true if any elements were removed.
+        """
+        ...
+
+    @abstractmethod
+    def union_update(self, other: Iterable[T]) -> None:
+        """Adds all elements from the other collection to this set."""
+        ...
+
+    @abstractmethod
+    def intersect_update(self, other: Iterable[T]) -> None:
+        """Retains only elements that are present in both this set and the other collection."""
+        ...
+
+    @abstractmethod
+    def subtract_update(self, other: Iterable[T]) -> None:
+        """Removes all elements from this set that are contained in the other collection."""
+        ...
 
 
 class KotlinMutableMap(KotlinMap[K, V]):
@@ -408,12 +594,106 @@ class KotlinMutableMap(KotlinMap[K, V]):
         ...
 
     @abstractmethod
+    def put_if_absent(self, key: K, value: V) -> Optional[V]:
+        """Associates the specified value with the specified key only if the key is not present.
+
+        Returns:
+            The current value associated with the key, or null if inserted.
+        """
+        ...
+
+    @abstractmethod
     def remove(self, key: K) -> Optional[V]:
         """Removes the specified key and its corresponding value from this map.
 
         Returns:
             The value associated with the key, or null if the key was not present.
         """
+        ...
+
+    @abstractmethod
+    def remove_value(self, key: K, value: V) -> bool:
+        """Removes the entry for the specified key only if it is mapped to the specified value.
+
+        Returns:
+            true if the entry was removed.
+        """
+        ...
+
+    @abstractmethod
+    def get_or_put(self, key: K, default_value: Callable[[], V]) -> V:
+        """Returns the value for the given key. If the key is not present, calls defaultValue,
+        puts the result into the map, and returns it.
+        """
+        ...
+
+    @abstractmethod
+    def compute(self, key: K, remapping_function: Callable[[K, Optional[V]], Optional[V]]) -> Optional[V]:
+        """Attempts to compute a mapping for the specified key and its current mapped value.
+
+        Returns:
+            The new value associated with the key, or null if none.
+        """
+        ...
+
+    @abstractmethod
+    def compute_if_absent(self, key: K, mapping_function: Callable[[K], V]) -> V:
+        """Computes a value for the specified key only if the key is not present.
+
+        Returns:
+            The current (existing or computed) value associated with the key.
+        """
+        ...
+
+    @abstractmethod
+    def compute_if_present(self, key: K, remapping_function: Callable[[K, V], Optional[V]]) -> Optional[V]:
+        """Computes a new value for the specified key only if a value is already present.
+
+        Returns:
+            The new value associated with the key, or null if removed.
+        """
+        ...
+
+    @abstractmethod
+    def merge(self, key: K, value: V, remapping_function: Callable[[V, V], V]) -> V:
+        """Merges the specified value with the existing value using the given function.
+
+        Returns:
+            The new value associated with the key.
+        """
+        ...
+
+    @abstractmethod
+    def replace(self, key: K, value: V) -> Optional[V]:
+        """Replaces the entry for the specified key only if it is currently mapped.
+
+        Returns:
+            The previous value associated with the key, or null if not present.
+        """
+        ...
+
+    @abstractmethod
+    def replace_all(self, function: Callable[[K, V], V]) -> None:
+        """Replaces each entry's value with the result of invoking the given function."""
+        ...
+
+    @abstractmethod
+    def pop(self, key: K, default: Optional[V] = None) -> Optional[V]:
+        """Removes and returns the value for the specified key, or default if not present."""
+        ...
+
+    @abstractmethod
+    def popitem(self) -> Tuple[K, V]:
+        """Removes and returns an arbitrary (key, value) pair from the map.
+
+        Raises:
+            KeyError: if the map is empty.
+        """
+        ...
+
+    @abstractmethod
+    def update(self, other: Dict[K, V]) -> None:
+        """Updates this map with key/value pairs from the specified dictionary."""
         ...
 
     @abstractmethod

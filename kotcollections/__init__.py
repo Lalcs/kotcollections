@@ -10,6 +10,9 @@ from .interfaces import (
     KotlinMutableList,
     KotlinMutableSet,
     KotlinMutableMap,
+    # Factory Mixin
+    KotlinCollectionFactory,
+    KotlinMapFactory,
     # Pythonic Alias Mixin
     PythonicListAliases,
 )
@@ -48,6 +51,9 @@ __all__ = [
     'KotlinMutableList',
     'KotlinMutableSet',
     'KotlinMutableMap',
+    # Factory Mixin Interfaces
+    'KotlinCollectionFactory',
+    'KotlinMapFactory',
     # Extension Interfaces
     'KotlinIterableExtensions',
     'KotlinListExtensions',
