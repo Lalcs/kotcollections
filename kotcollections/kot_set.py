@@ -9,6 +9,8 @@ from functools import reduce
 from typing import TypeVar, Generic, Callable, Optional, Set, Iterator, Any, Tuple, List, Type, TYPE_CHECKING, Dict
 
 from kotcollections.type_checker import TypeChecker
+from kotcollections.interfaces import KotlinSet
+from kotcollections.extensions import KotlinIterableExtensions, PythonicSetAliases
 
 if TYPE_CHECKING:
     from kotcollections.kot_list import KotList
@@ -21,7 +23,7 @@ R = TypeVar('R')
 
 
 
-class KotSet(Generic[T]):
+class KotSet(KotlinSet[T], KotlinIterableExtensions[T], PythonicSetAliases[T]):
     """A Python implementation of Kotlin's Set interface.
     
     This class provides all methods from Kotlin's Set interface with snake_case naming,
@@ -346,6 +348,11 @@ class KotSet(Generic[T]):
         from kotcollections.kot_list import KotList
         return KotList(element for element in self._elements if predicate(element))
 
+    def filter_indexed(self, predicate: Callable[[int, T], bool]) -> 'KotList[T]':
+        """Returns a list containing only elements matching the given predicate with index."""
+        from kotcollections.kot_list import KotList
+        return KotList(element for index, element in enumerate(self._elements) if predicate(index, element))
+
     def filter_not(self, predicate: Callable[[T], bool]) -> 'KotList[T]':
         """Returns a list containing only elements not matching the given predicate."""
         from kotcollections.kot_list import KotList
@@ -507,10 +514,35 @@ class KotSet(Generic[T]):
 
     def find(self, predicate: Callable[[T], bool]) -> Optional[T]:
         """Returns the first element matching the given predicate, or null if not found.
-        
+
         This is an alias for first_or_null_predicate() for Kotlin compatibility.
         """
         return self.first_or_null_predicate(predicate)
+
+    def find_last(self, predicate: Callable[[T], bool]) -> Optional[T]:
+        """Returns the last element matching the given predicate, or null if not found."""
+        result = None
+        for element in self._elements:
+            if predicate(element):
+                result = element
+        return result
+
+    def distinct(self) -> 'KotList[T]':
+        """Returns a list containing only distinct elements. For sets, returns all elements as a list."""
+        from kotcollections.kot_list import KotList
+        return KotList(self._elements)
+
+    def distinct_by(self, selector: Callable[[T], Any]) -> 'KotList[T]':
+        """Returns a list containing only elements having distinct keys returned by the given selector."""
+        from kotcollections.kot_list import KotList
+        seen_keys: Set[Any] = set()
+        result = []
+        for element in self._elements:
+            key = selector(element)
+            if key not in seen_keys:
+                seen_keys.add(key)
+                result.append(element)
+        return KotList(result)
 
     def partition(self, predicate: Callable[[T], bool]) -> Tuple['KotSet[T]', 'KotSet[T]']:
         """Splits the original set into pair of sets.
@@ -531,6 +563,12 @@ class KotSet(Generic[T]):
         """Performs the given action on each element."""
         for element in self._elements:
             action(element)
+
+    def on_each(self, action: Callable[[T], None]) -> 'KotSet[T]':
+        """Performs the given action on each element and returns the set itself."""
+        for element in self._elements:
+            action(element)
+        return self
 
     def for_each_indexed(self, action: Callable[[int, T], None]) -> None:
         """Performs the given action on each element, providing sequential index with the element."""

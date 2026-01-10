@@ -5,6 +5,8 @@ from functools import cmp_to_key
 from typing import TypeVar, Optional, Callable, Iterable, List, Type
 
 from kotcollections.kot_list import KotList
+from kotcollections.interfaces import KotlinMutableList
+from kotcollections.extensions import PythonicMutableListAliases
 
 T = TypeVar('T')
 
@@ -133,7 +135,7 @@ class MutableListIterator:
         return self.next()
 
 
-class KotMutableList(KotList[T]):
+class KotMutableList(KotList[T], KotlinMutableList[T], PythonicMutableListAliases[T]):
     def __init__(self, elements: Optional[Iterable[T]] = None):
         super().__init__(elements)
 
